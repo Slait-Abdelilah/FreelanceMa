@@ -12,24 +12,24 @@ import ResetPasswordView from '@/views/ResetPasswordView.vue'
 import VerifyAccountView from '@/views/VerifyAccountView.vue'
 
 // ===== CLIENT =====
-import RegisterClientView from '../views/ClientSite/RegisterClientView.vue'
-import LoginClientView from '../views/ClientSite/LoginClientView.vue'
+import RegisterClientView from '@/views/ClientLog/RegisterClientView.vue'
+import LoginClientView from '@/views/ClientLog/LoginClientView.vue'
 
 // ===== FREELANCER AUTH =====
-import RegisterFreelancerView from '../views/freelancerSite/RegisterFreelancerView.vue'
-import LoginFreelancerView from '../views/freelancerSite/LoginFreelancerView.vue'
+import RegisterFreelancerView from '@/views/freelancerLog/RegisterFreelancerView.vue'
+import LoginFreelancerView from '@/views/freelancerLog/LoginFreelancerView.vue'
 // ===== CLIENT DASHBOARD =====
-import ClientDashboard from '../views/clientts/dashbord/ClientDashboard.vue'
+import ClientDashboard from '@/views/clientsD/dashbord/ClientDashboard.vue'
 // ===== FREELANCER DASHBOARD =====
-import FreelancerDashboardLayout from '../views/freelancer/dashbord/FreelancerDashboardLayout.vue'
-import FreelancerHomeView from '../views/freelancer/dashbord/HomeView.vue'
-import SettingsView from '../views/freelancer/dashbord/SettingsView.vue'
-import ProfileView from '../views/freelancer/dashbord/ProfileView.vue'
-import PortfolioView from '../views/freelancer/dashbord/PortfolioView.vue'
-import ComingSoonView from '../views/freelancer/dashbord/ComingSoonView.vue'
-import WalletView from '../views/freelancer/dashbord/WalletView.vue'
-import ExploreMissionsView from '../views/freelancer/dashbord/ExploreMissionsView.vue'
-import ApplicationsView from '../views/freelancer/dashbord/ApplicationsView.vue'
+import FreelancerDashboardLayout from '@/views/freelancerD/dashbord/FreelancerDashboardLayout.vue'
+import FreelancerHomeView from '@/views/freelancerD/dashbord/HomeView.vue'
+import SettingsView from '@/views/freelancerD/dashbord/SettingsView.vue'
+import ProfileView from '@/views/freelancerD/dashbord/ProfileView.vue'
+import PortfolioView from '@/views/freelancerD/dashbord/PortfolioView.vue'
+import ComingSoonView from '@/views/freelancerD/dashbord/ComingSoonView.vue'
+import WalletView from '@/views/freelancerD/dashbord/WalletView.vue'
+import ExploreMissionsView from '@/views/freelancerD/dashbord/ExploreMissionsView.vue'
+import ApplicationsView from '@/views/freelancerD/dashbord/ApplicationsView.vue'
 
 
 

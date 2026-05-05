@@ -19,3 +19,9 @@ export const resetPassword = (token, newPassword) =>
 
 export const verifyAccount = (token) =>
   axios.post(`${BASE}/api/auth/verify`, { token })
+
+export const refreshTokenRequest = (refreshToken) =>
+  axios.post(`${BASE}/api/auth/refresh`, { refreshToken })
+
+export const logoutUser = (refreshToken) =>
+  axios.post(`${BASE}/api/auth/logout`, { refreshToken })

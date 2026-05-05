@@ -261,9 +261,7 @@ const submit = async () => {
 
     })
 
-    const token = response.data.token
-    const role = response.data.role
-    const email = response.data.email
+    const { token, refreshToken, role, email } = response.data
 
     // ===== VÉRIFICATION DU RÔLE =====
     // si l'utilisateur n'est PAS un client, on bloque la connexion
@@ -273,7 +271,7 @@ const submit = async () => {
       return
     }
 
-    authStore.setAuth(token, { email, role })
+    authStore.setAuth(token, { email, role }, refreshToken)
     router.push('/client/dashboard')
 
   } catch (err) {

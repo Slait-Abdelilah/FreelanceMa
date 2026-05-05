@@ -561,8 +561,8 @@ const allSections = computed(() => [
   { title: 'Compte', items: accountItems },
 ])
 
-const logout = () => {
-  authStore.logout()
+const logout = async () => {
+  await authStore.logout()
   router.push('/login/freelancer')
 }
 

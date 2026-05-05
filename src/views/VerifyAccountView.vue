@@ -179,9 +179,11 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const email = ref('')
 const codeDigits = ref(['', '', '', '', '', ''])
@@ -297,19 +299,8 @@ const verifyCode = async () => {
     )
 
     // le backend renvoie un token JWT → connexion automatique
-    const token = response.data.token
-    const userEmail = response.data.email
-    const role = response.data.role
-
-    // sauvegarder dans localStorage
-    localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify({
-      email: userEmail,
-      role: role
-    }))
-
-    // configurer axios pour les futures requêtes
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    const { token, refreshToken, email: userEmail, role } = response.data
+    authStore.setAuth(token, { email: userEmail, role }, refreshToken)
 
     // afficher l'écran de succès
     verified.value = true

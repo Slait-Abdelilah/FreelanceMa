@@ -222,9 +222,7 @@ const submit = async () => {
       password: form.value.password,
     })
 
-    const token = response.data.token
-    const role = response.data.role
-    const email = response.data.email
+    const { token, refreshToken, role, email } = response.data
 
     // ===== VÉRIFICATION DU RÔLE =====
     if (role !== 'FREELANCER') {
@@ -233,7 +231,7 @@ const submit = async () => {
       return
     }
 
-    authStore.setAuth(token, { email, role })
+    authStore.setAuth(token, { email, role }, refreshToken)
     router.push('/freelancer/dashboard')
 
   } catch (err) {
