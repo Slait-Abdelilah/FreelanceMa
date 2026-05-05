@@ -1,0 +1,46 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/freelance_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: false
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    # Access token : recommandé 900000 (15 min) avec refresh token activé
+    expiration: ${JWT_EXPIRATION:900000}
+    # Refresh token : 30 jours
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}
+  security:
+    # IPs des reverse proxies de confiance (séparées par virgule) — laissez vide en dev local
+    trusted-proxies: ${TRUSTED_PROXIES:}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
