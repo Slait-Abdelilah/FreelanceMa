@@ -1,0 +1,10 @@
+package org.example.userservice.repository;
+
+import org.example.userservice.entity.Transaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+    List<Transaction> findTop10ByWalletIdOrderByCreatedAtDesc(Long walletId);
+    List<Transaction> findByWalletIdOrderByCreatedAtDesc(Long walletId);
+}
