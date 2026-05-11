@@ -2,13 +2,8 @@ package org.example.userservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.userservice.dto.*;
-import org.example.userservice.entity.Client;
-import org.example.userservice.entity.Freelancer;
-import org.example.userservice.entity.User;
-import org.example.userservice.exception.AppException;
-import org.example.userservice.repository.UserRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.example.userservice.entity.UserProfile;
+import org.example.userservice.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,73 +11,51 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SettingsService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserProfileRepository userProfileRepository;
 
-    public UserSettingsDTO getSettings(String email) {
-        User user = getUser(email);
-        UserSettingsDTO.UserSettingsDTOBuilder builder = UserSettingsDTO.builder()
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phone(user.getPhone())
-                .language(user.getLanguage())
-                .currency(user.getCurrency())
-                .showOnlineStatus(user.getShowOnlineStatus());
-
-        if (user instanceof Freelancer f) {
-            builder.publicProfile(f.getPublicProfile()).showEarnings(f.getShowEarnings()).role("FREELANCER");
-        } else if (user instanceof Client c) {
-            builder.publicProfile(c.getPublicProfile()).showEarnings(false).role("CLIENT");
-        }
-        return builder.build();
+    public UserSettingsDTO getSettings(String email, Long userId, String role) {
+        return toDTO(getOrCreate(email, userId, role));
     }
 
     @Transactional
-    public UserSettingsDTO updateAccount(String email, UpdateAccountRequest request) {
-        User user = getUser(email);
-        if (request.getPhone() != null)    user.setPhone(request.getPhone());
-        if (request.getLanguage() != null) user.setLanguage(request.getLanguage());
-        if (request.getCurrency() != null) user.setCurrency(request.getCurrency());
-        userRepository.save(user);
-        return getSettings(email);
+    public UserSettingsDTO updateAccount(String email, Long userId, String role, UpdateAccountRequest req) {
+        UserProfile profile = getOrCreate(email, userId, role);
+        if (req.getPhone() != null)    profile.setPhone(req.getPhone());
+        if (req.getLanguage() != null) profile.setLanguage(req.getLanguage());
+        if (req.getCurrency() != null) profile.setCurrency(req.getCurrency());
+        return toDTO(userProfileRepository.save(profile));
     }
 
     @Transactional
-    public void updatePassword(String email, UpdatePasswordRequest request) {
-        User user = getUser(email);
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new AppException("Mot de passe actuel incorrect", HttpStatus.BAD_REQUEST);
+    public UserSettingsDTO updatePrivacy(String email, Long userId, String role, UpdatePrivacyRequest req) {
+        UserProfile profile = getOrCreate(email, userId, role);
+        if (req.getShowOnlineStatus() != null) profile.setShowOnlineStatus(req.getShowOnlineStatus());
+        if (req.getPublicProfile() != null)    profile.setPublicProfile(req.getPublicProfile());
+        if (req.getShowEarnings() != null && "FREELANCER".equals(profile.getRole())) {
+            profile.setShowEarnings(req.getShowEarnings());
         }
-        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
-            throw new AppException("Le nouveau mot de passe doit être différent", HttpStatus.BAD_REQUEST);
-        }
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        return toDTO(userProfileRepository.save(profile));
     }
 
-    @Transactional
-    public UserSettingsDTO updatePrivacy(String email, UpdatePrivacyRequest request) {
-        User user = getUser(email);
-        if (request.getShowOnlineStatus() != null) user.setShowOnlineStatus(request.getShowOnlineStatus());
-        if (user instanceof Freelancer f) {
-            if (request.getPublicProfile() != null) f.setPublicProfile(request.getPublicProfile());
-            if (request.getShowEarnings() != null)  f.setShowEarnings(request.getShowEarnings());
-        } else if (user instanceof Client c) {
-            if (request.getPublicProfile() != null) c.setPublicProfile(request.getPublicProfile());
-        }
-        userRepository.save(user);
-        return getSettings(email);
+    private UserSettingsDTO toDTO(UserProfile p) {
+        return UserSettingsDTO.builder()
+                .email(p.getEmail())
+                .firstName(p.getFirstName())
+                .lastName(p.getLastName())
+                .phone(p.getPhone())
+                .language(p.getLanguage())
+                .currency(p.getCurrency())
+                .showOnlineStatus(p.getShowOnlineStatus())
+                .publicProfile(p.getPublicProfile())
+                .showEarnings("FREELANCER".equals(p.getRole()) ? p.getShowEarnings() : false)
+                .role(p.getRole())
+                .build();
     }
 
-    @Transactional
-    public void deleteAccount(String email) {
-        User user = getUser(email);
-        userRepository.delete(user);
-    }
-
-    private User getUser(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException("Utilisateur introuvable", HttpStatus.NOT_FOUND));
+    private UserProfile getOrCreate(String email, Long userId, String role) {
+        return userProfileRepository.findByEmail(email)
+                .orElseGet(() -> userProfileRepository.save(
+                        UserProfile.builder().userId(userId).email(email).role(role).build()
+                ));
     }
 }

@@ -17,17 +17,28 @@ public class ProfileController {
 
     @GetMapping
     public ResponseEntity<ProfileDTO> getMyProfile(Authentication auth) {
-        return ResponseEntity.ok(profileService.getProfile(auth.getName()));
+        return ResponseEntity.ok(profileService.getProfile(auth.getName(), userId(auth), role(auth)));
     }
 
     @PutMapping
     public ResponseEntity<ProfileDTO> updateProfile(Authentication auth,
                                                      @RequestBody UpdateProfileRequest request) {
-        return ResponseEntity.ok(profileService.updateProfile(auth.getName(), request));
+        return ResponseEntity.ok(profileService.updateProfile(auth.getName(), userId(auth), role(auth), request));
     }
 
     @GetMapping("/{userId}/public")
     public ResponseEntity<ProfileDTO> getPublicProfile(@PathVariable Long userId) {
         return ResponseEntity.ok(profileService.getPublicProfile(userId));
+    }
+
+    private Long userId(Authentication auth) {
+        return (Long) auth.getDetails();
+    }
+
+    private String role(Authentication auth) {
+        return auth.getAuthorities().stream()
+                .findFirst()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .orElse("FREELANCER");
     }
 }

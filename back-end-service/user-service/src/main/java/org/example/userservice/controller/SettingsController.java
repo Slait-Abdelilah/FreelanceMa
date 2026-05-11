@@ -1,6 +1,5 @@
 package org.example.userservice.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.userservice.dto.*;
 import org.example.userservice.service.SettingsService;
@@ -17,31 +16,29 @@ public class SettingsController {
 
     @GetMapping
     public ResponseEntity<UserSettingsDTO> getSettings(Authentication auth) {
-        return ResponseEntity.ok(settingsService.getSettings(auth.getName()));
+        return ResponseEntity.ok(settingsService.getSettings(auth.getName(), userId(auth), role(auth)));
     }
 
     @PutMapping("/account")
     public ResponseEntity<UserSettingsDTO> updateAccount(Authentication auth,
                                                           @RequestBody UpdateAccountRequest request) {
-        return ResponseEntity.ok(settingsService.updateAccount(auth.getName(), request));
-    }
-
-    @PutMapping("/password")
-    public ResponseEntity<String> updatePassword(Authentication auth,
-                                                  @Valid @RequestBody UpdatePasswordRequest request) {
-        settingsService.updatePassword(auth.getName(), request);
-        return ResponseEntity.ok("Mot de passe modifié avec succès");
+        return ResponseEntity.ok(settingsService.updateAccount(auth.getName(), userId(auth), role(auth), request));
     }
 
     @PutMapping("/privacy")
     public ResponseEntity<UserSettingsDTO> updatePrivacy(Authentication auth,
                                                           @RequestBody UpdatePrivacyRequest request) {
-        return ResponseEntity.ok(settingsService.updatePrivacy(auth.getName(), request));
+        return ResponseEntity.ok(settingsService.updatePrivacy(auth.getName(), userId(auth), role(auth), request));
     }
 
-    @DeleteMapping("/account")
-    public ResponseEntity<String> deleteAccount(Authentication auth) {
-        settingsService.deleteAccount(auth.getName());
-        return ResponseEntity.ok("Compte supprimé");
+    private Long userId(Authentication auth) {
+        return (Long) auth.getDetails();
+    }
+
+    private String role(Authentication auth) {
+        return auth.getAuthorities().stream()
+                .findFirst()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .orElse("FREELANCER");
     }
 }
