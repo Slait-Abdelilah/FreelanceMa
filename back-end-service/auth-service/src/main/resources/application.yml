@@ -6,7 +6,7 @@ spring:
     name: auth-service
 
   datasource:
-    url: ${DB_URL:jdbc:mariadb://localhost:3306/freelance_db}
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/freelance_auth_db}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver
@@ -33,6 +33,12 @@ spring:
             enable: true
             required: true
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
 app:
   jwt:
     secret: ${JWT_SECRET}
@@ -44,3 +50,10 @@ app:
     # IPs des reverse proxies de confiance (séparées par virgule) — laissez vide en dev local
     trusted-proxies: ${TRUSTED_PROXIES:}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true

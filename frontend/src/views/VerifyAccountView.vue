@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-white flex">
 
     <!-- ============ CÔTÉ GAUCHE ============ -->
@@ -72,7 +72,11 @@
             </svg>
           </div>
           <h1 class="text-3xl font-bold text-ink mb-3">Compte activé !</h1>
-          <p class="text-ink-soft mb-8">Redirection vers votre tableau de bord...</p>
+          <p class="text-ink-soft mb-8">
+            {{ verifiedRole === 'FREELANCER'
+              ? 'Redirection vers la configuration de votre profil...'
+              : 'Redirection vers votre tableau de bord...' }}
+          </p>
           <div class="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
 
@@ -191,6 +195,7 @@ const codeInputs = ref([])
 const loading = ref(false)
 const errorMessage = ref('')
 const verified = ref(false)
+const verifiedRole = ref('')   // rôle de l'utilisateur après vérification
 const resendCountdown = ref(60)
 let countdownInterval = null
 
@@ -294,7 +299,7 @@ const verifyCode = async () => {
   try {
     // appel backend
     const response = await axios.post(
-        'http://localhost:8081/api/auth/verify-account',
+        'http://localhost:8080/api/auth/verify-account',
         { email: email.value, code: code }
     )
 
@@ -302,15 +307,17 @@ const verifyCode = async () => {
     const { token, refreshToken, email: userEmail, role } = response.data
     authStore.setAuth(token, { email: userEmail, role }, refreshToken)
 
-    // afficher l'écran de succès
+    // afficher l'écran de succès avec le bon message
     verified.value = true
+    verifiedRole.value = role
 
     // redirection selon le rôle après 2 secondes
     setTimeout(() => {
       if (role === 'CLIENT') {
         router.push('/client/dashboard')
       } else if (role === 'FREELANCER') {
-        router.push('/freelancer/dashboard')
+        // Le freelancer passe par l'onboarding pour compléter son profil
+        router.push('/onboarding/freelancer')
       } else {
         router.push('/')
       }
@@ -334,7 +341,7 @@ const resendCode = async () => {
   errorMessage.value = ''
 
   try {
-    await axios.post('http://localhost:8081/api/auth/resend-code', {
+    await axios.post('http://localhost:8080/api/auth/resend-code', {
       email: email.value
     })
 

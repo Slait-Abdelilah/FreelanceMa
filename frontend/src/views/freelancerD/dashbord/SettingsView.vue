@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="max-w-4xl mx-auto space-y-6">
 
     <!-- EN-TÊTE -->
@@ -338,11 +338,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore.js'
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 // ===== ÉTAT =====
 const loading = ref(true)
@@ -466,7 +468,7 @@ const changePassword = async () => {
   savingPassword.value = true
   try {
     await axios.put(
-        `${API_URL}/api/settings/password`,
+        `${API_URL}/api/auth/change-password`,
         {
           currentPassword: pwdForm.value.current,
           newPassword: pwdForm.value.new,
@@ -516,12 +518,11 @@ const handleDelete = async () => {
   try {
 
     await axios.delete(
-        `${API_URL}/api/settings/account`,
+        `${API_URL}/api/auth/account`,
         headers()
     )
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    window.location.href = '/'   // ← utilise window.location au lieu de router.push
+    authStore.clearAuth()
+    window.location.href = '/'
   } catch (err) {
     console.error('Delete error:', err)
     showToast(

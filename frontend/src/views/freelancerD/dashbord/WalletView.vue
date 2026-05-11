@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="max-w-5xl mx-auto space-y-5">
 
     <!-- EN-TÊTE -->
@@ -280,6 +280,8 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 // ===== ÉTAT =====
 const loading = ref(true)
 const loadingMore = ref(false)
@@ -328,7 +330,7 @@ const loadWallet = async () => {
   loading.value = true
   try {
     const { data } = await axios.get(
-        'http://localhost:8081/api/wallet',
+        `${API_URL}/api/wallet`,
         headers()
     )
 
@@ -357,7 +359,7 @@ const loadAllTransactions = async () => {
   loadingMore.value = true
   try {
     const { data } = await axios.get(
-        'http://localhost:8081/api/wallet/transactions',
+        `${API_URL}/api/wallet/transactions`,
         headers()
     )
     transactions.value = data
@@ -398,7 +400,7 @@ const requestWithdrawal = async () => {
   withdrawing.value = true
   try {
     const { data } = await axios.post(
-        'http://localhost:8081/api/wallet/withdraw',
+        `${API_URL}/api/wallet/withdraw`,
         {
           amount: parseFloat(withdrawForm.value.amount),
           iban: withdrawForm.value.iban.trim(),

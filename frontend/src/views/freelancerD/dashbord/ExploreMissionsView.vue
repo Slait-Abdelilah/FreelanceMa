@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="max-w-6xl mx-auto space-y-5">
 
     <!-- EN-TÊTE -->
@@ -458,11 +458,11 @@ const sortBy = ref('recent')
 let searchTimeout = null
 
 // ===== DONNÉES =====
-// GET http://localhost:8083/api/offers → List<OfferDTO>
+// GET http://localhost:8080/api/offers → List<OfferDTO>
 const offers = ref([])
 
 // ===== FORMULAIRE CANDIDATURE =====
-// POST http://localhost:8083/api/applications → CreateApplicationRequest
+// POST http://localhost:8080/api/applications → CreateApplicationRequest
 const applyForm = ref({
   coverLetter: '',
   proposedBudget: null,
@@ -533,10 +533,10 @@ const loadOffers = async (search = '') => {
     if (search) params.search = search
 
     const { data } = await axios.get(
-        'http://localhost:8083/api/offers',
+        'http://localhost:8080/api/offers',
         { params }
     )
-    offers.value = data
+    offers.value = data.content ?? data
   } catch (err) {
     console.error('loadOffers error:', err)
     showToast('Impossible de charger les missions', 'error')
@@ -611,7 +611,7 @@ const submitApplication = async () => {
   applying.value = true
   try {
     await axios.post(
-        'http://localhost:8083/api/applications',
+        'http://localhost:8080/api/applications',
         {
           offerId: selectedOffer.value.id,
           coverLetter: applyForm.value.coverLetter,

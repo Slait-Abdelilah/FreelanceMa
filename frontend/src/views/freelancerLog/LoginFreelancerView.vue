@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-cream flex">
 
     <!-- ============ CÔTÉ GAUCHE ============ -->
@@ -182,6 +182,8 @@ import { useAuthStore } from '@/stores/authStore'
 const router = useRouter()
 const authStore = useAuthStore()
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const showPassword = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
@@ -217,7 +219,7 @@ const submit = async () => {
   loading.value = true
 
   try {
-    const response = await axios.post('http://localhost:8081/api/auth/login', {
+    const response = await axios.post(`${API_URL}/api/auth/login`, {
       email: form.value.email,
       password: form.value.password,
     })

@@ -18,6 +18,7 @@ import LoginClientView from '@/views/ClientLog/LoginClientView.vue'
 // ===== FREELANCER AUTH =====
 import RegisterFreelancerView from '@/views/freelancerLog/RegisterFreelancerView.vue'
 import LoginFreelancerView from '@/views/freelancerLog/LoginFreelancerView.vue'
+import OnboardingFreelancerView from '@/views/freelancerLog/OnboardingFreelancerView.vue'
 // ===== CLIENT DASHBOARD =====
 import ClientDashboard from '@/views/clientsD/dashbord/ClientDashboard.vue'
 // ===== FREELANCER DASHBOARD =====
@@ -84,6 +85,11 @@ const routes = [
         path: '/login/freelancer',
         component: LoginFreelancerView,
         meta: { guestOnly: true }
+    },
+    {
+        path: '/onboarding/freelancer',
+        component: OnboardingFreelancerView,
+        meta: { requiresAuth: true, requiredRole: 'FREELANCER' }
     },
     // ===== CLIENT DASHBOARD =====
     {

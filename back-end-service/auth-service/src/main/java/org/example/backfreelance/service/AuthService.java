@@ -13,6 +13,9 @@ import org.example.backfreelance.enums.ClientType;
 import org.example.backfreelance.enums.ExperienceLevel;
 import org.example.backfreelance.enums.Role;
 import org.example.backfreelance.exceptionn.AppException;
+import org.example.backfreelance.messaging.UserDeletedEvent;
+import org.example.backfreelance.messaging.UserEventPublisher;
+import org.example.backfreelance.messaging.UserRegisteredEvent;
 import org.example.backfreelance.repository.RefreshTokenRepository;
 import org.example.backfreelance.repository.UserRepository;
 import org.example.backfreelance.seecuriity.AuditLogger;
@@ -41,19 +44,22 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
     private final AuditLogger auditLogger;
+    private final UserEventPublisher userEventPublisher;
 
     public AuthService(UserRepository userRepository,
                        RefreshTokenRepository refreshTokenRepository,
                        PasswordEncoder passwordEncoder,
                        JwtUtil jwtUtil,
                        EmailService emailService,
-                       AuditLogger auditLogger) {
+                       AuditLogger auditLogger,
+                       UserEventPublisher userEventPublisher) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.emailService = emailService;
         this.auditLogger = auditLogger;
+        this.userEventPublisher = userEventPublisher;
     }
 
     @Transactional
@@ -142,6 +148,12 @@ public class AuthService {
         String accessToken = jwtUtil.generateToken(user.getEmail(), role, user.getId());
         String refreshToken = createRefreshToken(user);
         auditLogger.log("VERIFY_ACCOUNT", email);
+
+        // Notifier user-service de créer le profil + wallet
+        userEventPublisher.publishUserRegistered(new UserRegisteredEvent(
+                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), role
+        ));
+
         return AuthResponse.builder()
                 .token(accessToken)
                 .refreshToken(refreshToken)
@@ -177,6 +189,11 @@ public class AuthService {
         user.setTokenExpirationDate(null);
         userRepository.save(user);
         auditLogger.log("VERIFY_EMAIL", user.getEmail());
+
+        String role = (user instanceof Client) ? "CLIENT" : "FREELANCER";
+        userEventPublisher.publishUserRegistered(new UserRegisteredEvent(
+                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), role
+        ));
     }
 
     @Transactional
@@ -271,6 +288,38 @@ public class AuthService {
             refreshTokenRepository.save(token);
             auditLogger.log("LOGOUT", token.getUser().getEmail());
         });
+    }
+
+    @Transactional
+    public void changePassword(String email, org.example.backfreelance.dto.UpdatePasswordRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException("Utilisateur introuvable", HttpStatus.NOT_FOUND));
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            auditLogger.logFailure("CHANGE_PASSWORD", email, "mot de passe actuel incorrect");
+            throw new AppException("Mot de passe actuel incorrect", HttpStatus.BAD_REQUEST);
+        }
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new AppException("Le nouveau mot de passe doit être différent de l'ancien", HttpStatus.BAD_REQUEST);
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        refreshTokenRepository.revokeAllByUserId(user.getId());
+        auditLogger.log("CHANGE_PASSWORD", email);
+    }
+
+    @Transactional
+    public void deleteAccount(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException("Utilisateur introuvable", HttpStatus.NOT_FOUND));
+        Long userId = user.getId();
+        // Supprimer tous les refresh tokens AVANT de supprimer l'utilisateur
+        // (sinon violation de contrainte FK : refresh_tokens.user_id référence users.id)
+        refreshTokenRepository.deleteAllByUserId(userId);
+        userRepository.delete(user);
+        auditLogger.log("DELETE_ACCOUNT", email);
+
+        // Notifier user-service de nettoyer portfolio + wallet
+        userEventPublisher.publishUserDeleted(new UserDeletedEvent(userId, email));
     }
 
     private String createRefreshToken(User user) {

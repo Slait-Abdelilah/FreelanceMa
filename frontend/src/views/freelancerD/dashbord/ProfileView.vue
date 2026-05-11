@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="max-w-4xl mx-auto space-y-5">
 
     <!-- EN-TÊTE -->
@@ -9,7 +9,7 @@
       </div>
       <!-- lien vers le profil public -->
       <a v-if="profile.id"
-         :href="`${API_URL}/api/profile/${profile.id}`"
+         :href="`${API_URL}/api/profile/${profile.id}/public`"
          target="_blank"
          class="flex items-center gap-1.5 text-[12px] font-semibold text-brand-600 hover:bg-brand-50 px-3 py-1.5 rounded-lg transition">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -323,7 +323,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 // ===== ÉTAT =====
 const loading = ref(true)

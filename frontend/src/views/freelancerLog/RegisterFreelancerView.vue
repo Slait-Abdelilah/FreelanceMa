@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-cream flex">
 
     <!-- ============ CÔTÉ GAUCHE — VISUEL ============ -->
@@ -170,64 +170,6 @@
             <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password }}</p>
           </div>
 
-          <!-- domaine principal -->
-          <div>
-            <label class="block text-xs font-bold text-ink mb-1.5">Votre domaine principal *</label>
-            <select v-model="form.domain"
-                    class="w-full bg-white border-2 border-gray-200 focus:border-brand-500 rounded-xl px-4 py-3 text-sm outline-none transition">
-              <option value="">Sélectionnez votre domaine</option>
-              <option value="dev"> Développement Web</option>
-              <option value="mobile"> Applications Mobile</option>
-              <option value="design"> Design & UI/UX</option>
-              <option value="marketing"> Marketing Digital</option>
-              <option value="writing">️ Rédaction</option>
-              <option value="video"> Vidéo & Animation</option>
-              <option value="translation"> Traduction</option>
-              <option value="other">Autre</option>
-            </select>
-          </div>
-
-          <!-- niveau expérience -->
-          <div>
-            <label class="block text-xs font-bold text-ink mb-1.5">Niveau d'expérience *</label>
-            <div class="grid grid-cols-3 gap-2">
-              <button @click="form.experience = 'junior'"
-                      :class="form.experience === 'junior' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 hover:border-gray-300'"
-                      class="border-2 rounded-xl p-3 text-center transition">
-                <div class="text-xs font-bold mb-0.5">Junior</div>
-                <div class="text-[10px] text-ink-soft">0-2 ans</div>
-              </button>
-              <button @click="form.experience = 'mid'"
-                      :class="form.experience === 'mid' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 hover:border-gray-300'"
-                      class="border-2 rounded-xl p-3 text-center transition">
-                <div class="text-xs font-bold mb-0.5">Confirmé</div>
-                <div class="text-[10px] text-ink-soft">3-5 ans</div>
-              </button>
-              <button @click="form.experience = 'senior'"
-                      :class="form.experience === 'senior' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 hover:border-gray-300'"
-                      class="border-2 rounded-xl p-3 text-center transition">
-                <div class="text-xs font-bold mb-0.5">Senior</div>
-                <div class="text-[10px] text-ink-soft">5+ ans</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- tarif horaire -->
-          <div>
-            <label class="block text-xs font-bold text-ink mb-1.5">Tarif horaire souhaité (DH)</label>
-            <div class="relative">
-              <input
-                  v-model="form.hourlyRate"
-                  type="number"
-                  placeholder="150"
-                  min="50"
-                  class="w-full bg-white border-2 border-gray-200 focus:border-brand-500 rounded-xl px-4 py-3 text-sm outline-none transition pr-16"
-              />
-              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-ink-soft text-sm font-medium">DH/h</span>
-            </div>
-            <p class="text-xs text-ink-soft mt-1">💡 Tarif moyen au Maroc : 120-200 DH/h</p>
-          </div>
-
           <!-- CGU -->
           <label class="flex items-start gap-3 cursor-pointer">
             <input v-model="form.acceptTerms" type="checkbox" class="mt-0.5 w-4 h-4 accent-brand-500"/>
@@ -279,6 +221,8 @@ import axios from 'axios'
 
 const router = useRouter()
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const showPassword = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
@@ -288,9 +232,6 @@ const form = ref({
   lastName: '',
   email: '',
   password: '',
-  domain: '',
-  experience: 'mid',
-  hourlyRate: '',
   acceptTerms: false,
 })
 
@@ -343,7 +284,7 @@ const submit = async () => {
   const emailToVerify = form.value.email
 
   try {
-    await axios.post('http://localhost:8081/api/auth/register', {
+    await axios.post(`${API_URL}/api/auth/register`, {
       firstName: form.value.firstName,
       lastName: form.value.lastName,
       email: form.value.email,
