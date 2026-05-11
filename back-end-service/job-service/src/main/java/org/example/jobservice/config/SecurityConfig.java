@@ -66,6 +66,10 @@ public class SecurityConfig {
                         // accept/reject candidature : CLIENT uniquement
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/accept").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/reject").hasRole("CLIENT")
+                        // favoris : FREELANCER uniquement
+                        .requestMatchers("/api/favorites/**").hasRole("FREELANCER")
+                        // notifications : tout utilisateur connecté
+                        .requestMatchers("/api/notifications/**").authenticated()
                         // tout le reste nécessite d'être connecté
                         .anyRequest().authenticated()
                 )

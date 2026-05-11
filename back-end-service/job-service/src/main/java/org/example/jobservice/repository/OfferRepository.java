@@ -16,11 +16,11 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
 
     Page<Offer> findByStatusOrderByCreatedAtDesc(OfferStatus status, Pageable pageable);
 
-    @Query(value = "SELECT o FROM Offer o WHERE o.status = 'OPEN' AND " +
+    @Query(value = "SELECT o FROM Offer o WHERE o.status = org.example.jobservice.enums.OfferStatus.OPEN AND " +
             "(LOWER(o.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(o.requiredSkills) LIKE LOWER(CONCAT('%', :keyword, '%')))",
-            countQuery = "SELECT COUNT(o) FROM Offer o WHERE o.status = 'OPEN' AND " +
+            countQuery = "SELECT COUNT(o) FROM Offer o WHERE o.status = org.example.jobservice.enums.OfferStatus.OPEN AND " +
             "(LOWER(o.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(o.requiredSkills) LIKE LOWER(CONCAT('%', :keyword, '%')))")
@@ -33,7 +33,7 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
     List<Offer> findByClientIdOrderByCreatedAtDesc(Long clientId);
 
     // filtrer par budget
-    @Query("SELECT o FROM Offer o WHERE o.status = 'OPEN' AND " +
+    @Query("SELECT o FROM Offer o WHERE o.status = org.example.jobservice.enums.OfferStatus.OPEN AND " +
             "o.budgetMax >= :minBudget AND o.budgetMin <= :maxBudget")
     List<Offer> findByBudgetRange(
             @Param("minBudget") BigDecimal minBudget,

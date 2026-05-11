@@ -175,7 +175,7 @@ public class ApplicationService {
 
         return applicationRepository.findByOfferIdOrderByCreatedAtDesc(offerId)
                 .stream()
-                .map(app -> toDTO(app, offer.getTitle()))
+                .map(app -> toDTO(app, offer.getTitle(), offer))
                 .collect(Collectors.toList());
     }
 
@@ -202,7 +202,7 @@ public class ApplicationService {
                 offer.getId(), app.getId()
         );
 
-        return toDTO(app, offer.getTitle());
+        return toDTO(app, offer.getTitle(), offer);
     }
 
     @Transactional
@@ -228,10 +228,14 @@ public class ApplicationService {
                 offer.getId(), app.getId()
         );
 
-        return toDTO(app, offer.getTitle());
+        return toDTO(app, offer.getTitle(), offer);
     }
 
     public ApplicationDTO toDTO(Application a, String offerTitle) {
+        return toDTO(a, offerTitle, null);
+    }
+
+    public ApplicationDTO toDTO(Application a, String offerTitle, Offer offer) {
         return ApplicationDTO.builder()
                 .id(a.getId())
                 .offerId(a.getOfferId())
@@ -243,6 +247,9 @@ public class ApplicationService {
                 .createdAt(a.getCreatedAt())
                 .completedAt(a.getCompletedAt())
                 .offerTitle(offerTitle)
+                .offerCategory(offer != null && offer.getCategory() != null ? offer.getCategory().name() : null)
+                .offerBudgetMin(offer != null ? offer.getBudgetMin() : null)
+                .offerBudgetMax(offer != null ? offer.getBudgetMax() : null)
                 .build();
     }
 }
