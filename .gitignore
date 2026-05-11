@@ -3,6 +3,5 @@ dist/
 .env
 .env.*
 .idea/
-.claude/
 .vite/
 *.iml
