@@ -6,6 +6,7 @@ import org.example.jobservice.dto.CreateApplicationRequest;
 import org.example.jobservice.entity.Application;
 import org.example.jobservice.entity.Offer;
 import org.example.jobservice.enums.ApplicationStatus;
+import org.example.jobservice.enums.NotificationType;
 import org.example.jobservice.enums.OfferStatus;
 import org.example.jobservice.exception.ConflictException;
 import org.example.jobservice.exception.ForbiddenException;
@@ -24,6 +25,7 @@ public class ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final OfferRepository offerRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ApplicationDTO apply(Long freelancerId, CreateApplicationRequest request) {
@@ -50,7 +52,17 @@ public class ApplicationService {
         offer.setApplicationsCount(offer.getApplicationsCount() + 1);
         offerRepository.save(offer);
 
-        return toDTO(applicationRepository.save(application), offer.getTitle());
+        Application saved = applicationRepository.save(application);
+
+        notificationService.create(
+                freelancerId,
+                NotificationType.APPLICATION_SUBMITTED,
+                "Candidature envoyée",
+                "Votre candidature pour « " + offer.getTitle() + " » a bien été soumise.",
+                offer.getId(), saved.getId()
+        );
+
+        return toDTO(saved, offer.getTitle());
     }
 
     public List<ApplicationDTO> getMyApplications(Long freelancerId) {
@@ -113,6 +125,15 @@ public class ApplicationService {
 
         String offerTitle = offerRepository.findById(app.getOfferId())
                 .map(Offer::getTitle).orElse("Offre supprimée");
+
+        notificationService.create(
+                freelancerId,
+                NotificationType.MISSION_COMPLETED,
+                "Mission terminée",
+                "La mission « " + offerTitle + " » a été marquée comme terminée. Félicitations !",
+                app.getOfferId(), applicationId
+        );
+
         return toDTO(app, offerTitle);
     }
 
@@ -135,6 +156,14 @@ public class ApplicationService {
         offerRepository.findById(app.getOfferId()).ifPresent(offer -> {
             offer.setApplicationsCount(Math.max(0, offer.getApplicationsCount() - 1));
             offerRepository.save(offer);
+
+            notificationService.create(
+                    freelancerId,
+                    NotificationType.APPLICATION_WITHDRAWN,
+                    "Candidature retirée",
+                    "Vous avez retiré votre candidature pour « " + offer.getTitle() + " ».",
+                    offer.getId(), applicationId
+            );
         });
     }
 

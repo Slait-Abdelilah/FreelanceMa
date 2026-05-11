@@ -371,9 +371,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -525,6 +526,20 @@ const profileMenu = [
 
 const unreadCount = ref(0)
 
+const loadUnreadCount = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const { data } = await axios.get('http://localhost:8080/api/notifications/unread-count', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    unreadCount.value = data.count || 0
+  } catch {
+    // silencieux — badge non critique
+  }
+}
+
+let pollInterval = null
+
 // pour mobile
 const allSections = computed(() => [
   { title: '', items: mainItems },
@@ -544,12 +559,22 @@ const handleClickOutside = (e) => {
   }
 }
 
+// reset badge when navigating to notifications page
+watch(() => route.path, (path) => {
+  if (path === '/freelancer/notifications') {
+    setTimeout(() => { unreadCount.value = 0 }, 800)
+  }
+})
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  loadUnreadCount()
+  pollInterval = setInterval(loadUnreadCount, 30000)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  clearInterval(pollInterval)
 })
 
 

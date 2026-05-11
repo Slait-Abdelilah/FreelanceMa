@@ -33,6 +33,7 @@ import ExploreMissionsView from '@/views/freelancerD/dashbord/ExploreMissionsVie
 import ApplicationsView from '@/views/freelancerD/dashbord/ApplicationsView.vue'
 import ActiveMissionsView from '@/views/freelancerD/dashbord/ActiveMissionsView.vue'
 import FavoritesView from '@/views/freelancerD/dashbord/FavoritesView.vue'
+import NotificationsView from '@/views/freelancerD/dashbord/NotificationsView.vue'
 
 
 
@@ -115,7 +116,7 @@ const routes = [
             { path: 'active-missions', component: ActiveMissionsView },
             { path: 'favorites', component: FavoritesView },
             { path: 'messages', component: ComingSoonView },
-            { path: 'notifications', component: ComingSoonView },
+            { path: 'notifications', component: NotificationsView },
             { path: 'wallet', component: WalletView },
             { path: 'help', component: ComingSoonView },
 
