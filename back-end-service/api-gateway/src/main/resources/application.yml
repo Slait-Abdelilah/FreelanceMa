@@ -51,6 +51,20 @@ spring:
           filters:
             - JwtAuth
 
+        - id: job-service-favorites
+          uri: lb://job-service
+          predicates:
+            - Path=/api/favorites/**
+          filters:
+            - JwtAuth
+
+        - id: job-service-notifications
+          uri: lb://job-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - JwtAuth
+
         # ── User Service ──────────────────────────────────────────────────────
         - id: user-service-profile
           uri: lb://user-service
