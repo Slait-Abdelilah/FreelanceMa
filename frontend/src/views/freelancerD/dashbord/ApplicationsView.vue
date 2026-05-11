@@ -1,575 +1,397 @@
-﻿<template>
-  <div class="max-w-5xl mx-auto space-y-5">
+<template>
+  <div class="max-w-5xl mx-auto pb-8">
 
-    <!-- EN-TÊTE -->
-    <div class="flex items-center justify-between">
+    <!-- ─── HEADER ──────────────────────────────────────────── -->
+    <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-xl font-bold text-ink">Mes candidatures</h1>
-        <p class="text-[13px] text-[#73726C] mt-0.5">
-          {{ applications.length }} candidature{{ applications.length > 1 ? 's' : '' }} au total
-        </p>
+        <h1 class="text-xl font-bold text-ink">Candidatures</h1>
+        <p class="text-sm text-[#9C9A92] mt-0.5">{{ applications.length }} au total</p>
       </div>
-      <router-link to="/freelancer/explore"
-                   class="flex items-center gap-2 bg-ink hover:bg-[#1A1A18] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
+      <RouterLink to="/freelancer/explore"
+                  class="text-sm font-medium text-ink border border-[#EBEBE5] hover:bg-[#F4F4ED] px-4 py-2 rounded-lg transition">
         Explorer les missions
-      </router-link>
+      </RouterLink>
     </div>
 
-    <!-- FILTRES PAR STATUT -->
-    <div class="flex items-center gap-2 flex-wrap">
+    <!-- ─── ONGLETS STATUT ──────────────────────────────────── -->
+    <div class="flex items-center gap-1 border-b border-[#EBEBE5] mb-6">
       <button
-          v-for="filter in statusFilters"
-          :key="filter.value"
-          @click="selectedStatus = filter.value"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition"
-          :class="selectedStatus === filter.value
-          ? 'bg-ink text-white'
-          : 'bg-white border border-[#EBEBE5] text-[#5F5E5A] hover:border-brand-500 hover:text-brand-600'"
+        v-for="f in statusFilters" :key="f.value"
+        @click="selectedStatus = f.value"
+        class="relative pb-3 px-3 text-sm transition"
+        :class="selectedStatus === f.value
+          ? 'font-semibold text-ink'
+          : 'font-medium text-[#9C9A92] hover:text-ink'"
       >
-        <span>{{ filter.icon }}</span>
-        <span>{{ filter.label }}</span>
-        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-              :class="selectedStatus === filter.value
-                ? 'bg-white/20 text-white'
-                : 'bg-[#F4F4ED] text-[#73726C]'">
-          {{ getCountByStatus(filter.value) }}
+        {{ f.label }}
+        <span class="ml-1.5 text-xs tabular-nums"
+              :class="selectedStatus === f.value ? 'text-[#73726C]' : 'text-[#C4C3BC]'">
+          {{ getCountByStatus(f.value) }}
         </span>
+        <span v-if="selectedStatus === f.value"
+              class="absolute bottom-0 left-0 right-0 h-0.5 bg-ink rounded-t-full"></span>
       </button>
     </div>
 
-    <!-- LOADING -->
-    <div v-if="loading" class="flex justify-center py-16">
-      <div class="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-
-    <!-- LISTE VIDE -->
-    <div v-else-if="filteredApplications.length === 0"
-         class="bg-white rounded-xl border border-dashed border-[#EBEBE5] py-16 text-center">
-      <div class="w-14 h-14 bg-[#F4F4ED] rounded-xl flex items-center justify-center mx-auto mb-4">
-        <svg class="w-7 h-7 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
+    <!-- ─── CHARGEMENT ──────────────────────────────────────── -->
+    <div v-if="loading" class="bg-white border border-[#EBEBE5] rounded-xl overflow-hidden divide-y divide-[#EBEBE5]">
+      <div v-for="i in 5" :key="i" class="flex items-center gap-4 px-5 py-4 animate-pulse">
+        <div class="w-2 h-2 rounded-full bg-[#E5E5E0] flex-shrink-0"></div>
+        <div class="flex-1">
+          <div class="h-3 bg-[#F4F4ED] rounded w-2/3 mb-2"></div>
+          <div class="h-3 bg-[#F4F4ED] rounded w-1/3"></div>
+        </div>
+        <div class="h-5 w-20 bg-[#F4F4ED] rounded-full"></div>
+        <div class="h-3 w-16 bg-[#F4F4ED] rounded"></div>
       </div>
-      <h3 class="text-[15px] font-bold text-ink mb-1">
-        {{ selectedStatus === 'ALL' ? 'Aucune candidature' : 'Aucune candidature ' + getStatusLabel(selectedStatus).toLowerCase() }}
-      </h3>
-      <p class="text-[13px] text-[#73726C] mb-5 max-w-xs mx-auto">
-        {{ selectedStatus === 'ALL'
-          ? 'Explorez les missions disponibles et postulez pour trouver votre prochaine mission'
-          : 'Pas de candidature avec ce statut pour le moment' }}
-      </p>
-      <router-link to="/freelancer/explore"
-                   class="inline-flex items-center gap-2 bg-ink text-white text-[13px] font-semibold px-4 py-2 rounded-lg hover:bg-[#1A1A18] transition">
-        Trouver des missions
-      </router-link>
     </div>
 
-    <!-- LISTE CANDIDATURES -->
-    <div v-else class="space-y-3">
-      <div v-for="app in filteredApplications" :key="app.id"
-           class="bg-white rounded-xl border border-[#EBEBE5] overflow-hidden hover:border-brand-200 hover:shadow-sm transition">
+    <!-- ─── ÉTAT VIDE ────────────────────────────────────────── -->
+    <div v-else-if="filteredApplications.length === 0"
+         class="bg-white border border-[#EBEBE5] rounded-xl py-16 text-center">
+      <p class="text-sm font-semibold text-ink mb-1">Aucune candidature</p>
+      <p class="text-xs text-[#9C9A92] mb-4">
+        {{ selectedStatus === 'ALL'
+          ? 'Postulez à des missions pour les voir apparaître ici'
+          : 'Aucune candidature avec ce statut' }}
+      </p>
+      <RouterLink v-if="selectedStatus === 'ALL'" to="/freelancer/explore"
+                  class="text-xs font-medium text-brand-600 border border-brand-200 hover:bg-brand-50 px-4 py-2 rounded-lg transition">
+        Explorer les offres
+      </RouterLink>
+    </div>
 
-        <div class="p-5">
-          <div class="flex items-start gap-4">
+    <!-- ─── LISTE ────────────────────────────────────────────── -->
+    <div v-else class="bg-white border border-[#EBEBE5] rounded-xl overflow-hidden">
 
-            <!-- icône catégorie -->
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-lg"
-                 :class="getCategoryBg(app.offerCategory)">
-              {{ getCategoryIcon(app.offerCategory) }}
+      <div class="divide-y divide-[#EBEBE5]">
+        <div v-for="app in filteredApplications" :key="app.id">
+
+          <!-- ligne principale -->
+          <div class="flex items-start gap-4 px-5 py-4 hover:bg-[#FAFAF7] transition">
+
+            <!-- indicateur statut -->
+            <div class="flex-shrink-0 mt-1.5">
+              <span class="block w-2 h-2 rounded-full" :class="statusDot(app.status)"></span>
             </div>
 
-            <!-- infos -->
+            <!-- contenu -->
             <div class="flex-1 min-w-0">
 
-              <!-- titre + statut -->
-              <div class="flex items-start justify-between gap-3 mb-1">
-                <h3 class="text-[14px] font-bold text-ink leading-snug line-clamp-1">
-                  {{ app.offerTitle }}
-                </h3>
-                <span class="text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
-                      :class="getStatusClass(app.status)">
-                  {{ getStatusIcon(app.status) }} {{ getStatusLabel(app.status) }}
-                </span>
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-ink truncate">
+                    {{ app.offerTitle || 'Mission #' + app.offerId }}
+                  </p>
+                  <div class="flex items-center gap-3 mt-1 text-xs text-[#9C9A92]">
+                    <span>Postulé {{ timeAgo(app.createdAt) }}</span>
+                    <span v-if="app.proposedBudget">·  {{ formatAmount(app.proposedBudget) }} DH proposés</span>
+                    <span v-if="app.proposedDays">·  {{ app.proposedDays }}j estimés</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-xs font-medium px-2.5 py-1 rounded-full"
+                        :class="statusBadge(app.status)">
+                    {{ statusLabel(app.status) }}
+                  </span>
+                </div>
               </div>
 
-              <!-- catégorie -->
-              <span class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md mb-2"
-                    :class="getCategoryClass(app.offerCategory)">
-                {{ getCategoryLabel(app.offerCategory) }}
-              </span>
+              <!-- actions -->
+              <div class="flex items-center gap-2 mt-3">
+                <button @click="viewOffer(app.offerId)"
+                        class="text-xs text-[#73726C] hover:text-ink border border-[#EBEBE5] hover:border-[#D1D1CB] px-3 py-1.5 rounded-md transition">
+                  Voir l'offre
+                </button>
+                <button v-if="app.coverLetter"
+                        @click="toggleLetter(app.id)"
+                        class="text-xs text-[#73726C] hover:text-ink px-3 py-1.5 rounded-md hover:bg-[#F4F4ED] transition">
+                  {{ expandedLetters.includes(app.id) ? 'Masquer la lettre' : 'Lettre de motivation' }}
+                </button>
+                <button v-if="app.status === 'PENDING'"
+                        @click="confirmWithdraw(app)"
+                        class="text-xs text-red-500 hover:text-red-700 px-3 py-1.5 rounded-md hover:bg-red-50 transition ml-auto">
+                  Retirer
+                </button>
+              </div>
 
-              <!-- détails de la candidature -->
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-
-                <div class="bg-[#FAFAF7] rounded-lg p-2.5">
-                  <div class="text-[10px] text-[#9C9A92] font-medium mb-0.5">Mon devis</div>
-                  <div class="text-[13px] font-bold text-ink">
-                    {{ app.proposedBudget ? formatAmount(app.proposedBudget) + ' DH' : '—' }}
-                  </div>
-                </div>
-
-                <div class="bg-[#FAFAF7] rounded-lg p-2.5">
-                  <div class="text-[10px] text-[#9C9A92] font-medium mb-0.5">Budget client</div>
-                  <div class="text-[13px] font-bold text-ink">
-                    {{ formatBudget(app.offerBudgetMin, app.offerBudgetMax) }}
-                  </div>
-                </div>
-
-                <div class="bg-[#FAFAF7] rounded-lg p-2.5">
-                  <div class="text-[10px] text-[#9C9A92] font-medium mb-0.5">Délai proposé</div>
-                  <div class="text-[13px] font-bold text-ink">
-                    {{ app.proposedDays ? app.proposedDays + ' jours' : '—' }}
-                  </div>
-                </div>
-
-                <div class="bg-[#FAFAF7] rounded-lg p-2.5">
-                  <div class="text-[10px] text-[#9C9A92] font-medium mb-0.5">Postulé le</div>
-                  <div class="text-[13px] font-bold text-ink">
-                    {{ formatDate(app.createdAt) }}
-                  </div>
-                </div>
-
+              <!-- lettre de motivation -->
+              <div v-if="app.coverLetter && expandedLetters.includes(app.id)"
+                   class="mt-3 p-3 bg-[#FAFAF7] border border-[#EBEBE5] rounded-lg text-xs text-[#5F5E5A] leading-relaxed whitespace-pre-line">
+                {{ app.coverLetter }}
               </div>
 
             </div>
           </div>
 
-          <!-- lettre de motivation (expandable) -->
-          <div v-if="app.coverLetter" class="mt-4 pt-4 border-t border-[#EBEBE5]">
-            <button @click="toggleCoverLetter(app.id)"
-                    class="flex items-center gap-1.5 text-[12px] font-semibold text-[#73726C] hover:text-ink transition">
-              <svg class="w-3.5 h-3.5 transition-transform"
-                   :class="expandedLetters.includes(app.id) ? 'rotate-180' : ''"
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-              </svg>
-              {{ expandedLetters.includes(app.id) ? 'Masquer' : 'Voir ma lettre de motivation' }}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─── TOAST ────────────────────────────────────────────── -->
+    <Transition enter-from-class="opacity-0 translate-y-2"
+                enter-active-class="transition duration-200"
+                leave-to-class="opacity-0 translate-y-2"
+                leave-active-class="transition duration-150">
+      <div v-if="toast.show"
+           class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg"
+           :class="toast.type === 'success' ? 'bg-ink text-white' : 'bg-red-600 text-white'">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                :d="toast.type === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'"/>
+        </svg>
+        {{ toast.message }}
+      </div>
+    </Transition>
+
+    <!-- ─── MODAL RETRAIT ────────────────────────────────────── -->
+    <Transition enter-from-class="opacity-0" enter-active-class="transition duration-150"
+                leave-to-class="opacity-0" leave-active-class="transition duration-150">
+      <div v-if="showWithdrawModal"
+           class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+           @click.self="showWithdrawModal = false">
+        <div class="bg-white rounded-xl w-full max-w-sm p-6 shadow-xl"
+             @click.stop>
+          <h3 class="text-base font-bold text-ink mb-1">Retirer cette candidature ?</h3>
+          <p class="text-sm text-[#73726C] mb-1 truncate">{{ appToWithdraw?.offerTitle }}</p>
+          <p class="text-xs text-[#9C9A92] mb-5">Cette action est irréversible.</p>
+          <div class="flex gap-2">
+            <button @click="showWithdrawModal = false"
+                    class="flex-1 py-2.5 text-sm font-medium border border-[#EBEBE5] hover:bg-[#F4F4ED] rounded-lg transition">
+              Annuler
             </button>
-
-            <div v-if="expandedLetters.includes(app.id)"
-                 class="mt-3 p-3 bg-[#FAFAF7] rounded-lg text-[13px] text-[#5F5E5A] leading-relaxed whitespace-pre-line">
-              {{ app.coverLetter }}
-            </div>
+            <button @click="withdrawApplication" :disabled="withdrawing"
+                    class="flex-1 py-2.5 text-sm font-semibold bg-red-600 hover:bg-red-700 text-white rounded-lg transition disabled:opacity-50">
+              {{ withdrawing ? 'Retrait...' : 'Confirmer' }}
+            </button>
           </div>
-
-          <!-- actions -->
-          <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#EBEBE5]">
-
-            <div class="text-[11px] text-[#9C9A92]">
-              {{ timeAgo(app.createdAt) }}
-            </div>
-
-            <div class="flex items-center gap-2">
-
-              <!-- voir l'offre -->
-              <button @click="viewOffer(app.offerId)"
-                      class="text-[12px] font-semibold text-ink bg-[#F4F4ED] hover:bg-[#EBEBE5] px-3 py-1.5 rounded-lg transition">
-                Voir l'offre
-              </button>
-
-              <!-- retirer la candidature (seulement si PENDING) -->
-              <button v-if="app.status === 'PENDING'"
-                      @click="confirmWithdraw(app)"
-                      class="text-[12px] font-semibold text-red-600 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition">
-                Retirer
-              </button>
-
-            </div>
-          </div>
-
         </div>
-
       </div>
-    </div>
+    </Transition>
 
-    <!-- TOAST -->
-    <div v-if="toast.show"
-         class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl text-[13px] font-medium flex items-center gap-2"
-         :class="toast.type === 'success' ? 'bg-ink text-white' : 'bg-red-600 text-white'">
-      <svg v-if="toast.type === 'success'" class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-      </svg>
-      <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-      {{ toast.message }}
-    </div>
+    <!-- ─── MODAL DÉTAIL OFFRE ───────────────────────────────── -->
+    <Transition enter-from-class="opacity-0" enter-active-class="transition duration-150"
+                leave-to-class="opacity-0" leave-active-class="transition duration-150">
+      <div v-if="selectedOffer !== null"
+           class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+           @click.self="selectedOffer = null">
+        <div class="bg-white rounded-xl w-full max-w-lg shadow-xl max-h-[85vh] flex flex-col"
+             @click.stop>
 
-    <!-- MODAL CONFIRMATION RETRAIT -->
-    <div v-if="showWithdrawModal"
-         class="fixed inset-0 bg-ink/50 z-50 flex items-center justify-center p-4"
-         @click.self="showWithdrawModal = false">
-
-      <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-
-        <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-          <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-          </svg>
-        </div>
-
-        <h3 class="text-[16px] font-bold text-ink text-center mb-1">
-          Retirer cette candidature ?
-        </h3>
-        <p class="text-[13px] text-[#73726C] text-center mb-1">
-          {{ appToWithdraw?.offerTitle }}
-        </p>
-        <p class="text-[12px] text-[#9C9A92] text-center mb-5">
-          Cette action est irréversible.
-        </p>
-
-        <div class="flex gap-3">
-          <button @click="showWithdrawModal = false"
-                  class="flex-1 py-2.5 border border-[#EBEBE5] hover:bg-[#F4F4ED] text-[13px] font-medium rounded-lg transition">
-            Annuler
-          </button>
-          <button @click="withdrawApplication" :disabled="withdrawing"
-                  class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2">
-            <svg v-if="withdrawing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            {{ withdrawing ? 'Retrait...' : 'Confirmer' }}
-          </button>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- MODAL DÉTAIL OFFRE -->
-    <div v-if="selectedOffer"
-         class="fixed inset-0 bg-ink/50 z-50 flex items-center justify-center p-4"
-         @click.self="selectedOffer = null">
-
-      <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[80vh] overflow-y-auto">
-
-        <div class="sticky top-0 bg-white px-6 py-4 border-b border-[#EBEBE5] flex items-center justify-between">
-          <h2 class="text-[15px] font-bold text-ink">Détail de l'offre</h2>
-          <button @click="selectedOffer = null" class="p-1.5 hover:bg-[#F4F4ED] rounded-md">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <div v-if="loadingOffer" class="flex justify-center py-10">
-          <div class="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-
-        <div v-else-if="selectedOffer" class="p-6 space-y-4">
-
-          <div>
-            <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mb-2"
-                  :class="getCategoryClass(selectedOffer.category)">
-              {{ getCategoryLabel(selectedOffer.category) }}
-            </span>
-            <h3 class="text-[16px] font-bold text-ink mb-2">{{ selectedOffer.title }}</h3>
-            <p class="text-[13px] text-[#5F5E5A] leading-relaxed">
-              {{ selectedOffer.description }}
-            </p>
+          <!-- en-tête modal -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-[#EBEBE5]">
+            <p class="text-sm font-bold text-ink">Détail de l'offre</p>
+            <button @click="selectedOffer = null"
+                    class="p-1.5 text-[#9C9A92] hover:text-ink hover:bg-[#F4F4ED] rounded-md transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div class="bg-[#FAFAF7] rounded-lg p-3">
-              <div class="text-[11px] text-[#9C9A92] mb-0.5">Budget</div>
-              <div class="text-[14px] font-bold text-ink">
-                {{ formatBudget(selectedOffer.budgetMin, selectedOffer.budgetMax) }} DH
+          <!-- contenu modal -->
+          <div class="overflow-y-auto flex-1">
+
+            <div v-if="loadingOffer" class="p-6 space-y-3 animate-pulse">
+              <div class="h-4 bg-[#F4F4ED] rounded w-3/4"></div>
+              <div class="h-3 bg-[#F4F4ED] rounded w-full"></div>
+              <div class="h-3 bg-[#F4F4ED] rounded w-2/3"></div>
+            </div>
+
+            <div v-else-if="selectedOffer && selectedOffer.id" class="p-5 space-y-5">
+
+              <div>
+                <p class="text-base font-bold text-ink mb-2">{{ selectedOffer.title }}</p>
+                <p class="text-sm text-[#5F5E5A] leading-relaxed">{{ selectedOffer.description }}</p>
               </div>
-            </div>
-            <div class="bg-[#FAFAF7] rounded-lg p-3">
-              <div class="text-[11px] text-[#9C9A92] mb-0.5">Deadline</div>
-              <div class="text-[14px] font-bold text-ink">
-                {{ selectedOffer.deadline ? formatDate(selectedOffer.deadline) : '—' }}
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="border border-[#EBEBE5] rounded-lg p-3">
+                  <p class="text-xs text-[#9C9A92] mb-1">Budget client</p>
+                  <p class="text-sm font-semibold text-ink">
+                    {{ formatBudget(selectedOffer.budgetMin, selectedOffer.budgetMax) }} DH
+                  </p>
+                </div>
+                <div class="border border-[#EBEBE5] rounded-lg p-3">
+                  <p class="text-xs text-[#9C9A92] mb-1">Deadline</p>
+                  <p class="text-sm font-semibold text-ink">
+                    {{ selectedOffer.deadline ? formatDate(selectedOffer.deadline) : '—' }}
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div v-if="selectedOffer.requiredSkills">
-            <div class="text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-2">
-              Compétences requises
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <span v-for="skill in getSkillTags(selectedOffer.requiredSkills)"
-                    :key="skill"
-                    class="text-[12px] bg-brand-50 text-brand-700 px-2.5 py-1 rounded-md font-medium">
-                {{ skill }}
-              </span>
-            </div>
-          </div>
+              <div v-if="selectedOffer.requiredSkills">
+                <p class="text-xs font-semibold text-[#9C9A92] uppercase tracking-wider mb-2">
+                  Compétences requises
+                </p>
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-for="skill in getSkillTags(selectedOffer.requiredSkills)" :key="skill"
+                        class="text-xs border border-[#EBEBE5] text-[#5F5E5A] px-2.5 py-1 rounded-md">
+                    {{ skill }}
+                  </span>
+                </div>
+              </div>
 
-          <div class="text-[12px] text-[#9C9A92]">
-            {{ selectedOffer.applicationsCount }} candidat(s) · Publiée {{ timeAgo(selectedOffer.createdAt) }}
+              <p class="text-xs text-[#9C9A92]">
+                {{ selectedOffer.applicationsCount || 0 }} candidat(s) · Publiée {{ timeAgo(selectedOffer.createdAt) }}
+              </p>
+
+            </div>
           </div>
 
         </div>
-
       </div>
-    </div>
+    </Transition>
 
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
 
-// ===== ÉTAT =====
-const loading = ref(true)
-const withdrawing = ref(false)
-const loadingOffer = ref(false)
+// ── État ────────────────────────────────────
+const loading          = ref(true)
+const withdrawing      = ref(false)
+const loadingOffer     = ref(false)
 const showWithdrawModal = ref(false)
-const appToWithdraw = ref(null)
-const selectedOffer = ref(null)
-const selectedStatus = ref('ALL')
-const expandedLetters = ref([])
-const toast = ref({ show: false, message: '', type: 'success' })
+const appToWithdraw    = ref(null)
+const selectedOffer    = ref(null)
+const selectedStatus   = ref('ALL')
+const expandedLetters  = ref([])
+const applications     = ref([])
+const toast            = ref({ show: false, message: '', type: 'success' })
 
-// ===== DONNÉES =====
-// GET http://localhost:8080/api/applications/my → List<ApplicationDTO>
-const applications = ref([])
-
-// ===== FILTRES STATUT =====
+// ── Filtres ─────────────────────────────────
 const statusFilters = [
-  { value: 'ALL', label: 'Toutes', icon: '📋' },
-  { value: 'PENDING', label: 'En attente', icon: '⏳' },
-  { value: 'ACCEPTED', label: 'Acceptées', icon: '✅' },
-  { value: 'REJECTED', label: 'Refusées', icon: '❌' },
-  { value: 'WITHDRAWN', label: 'Retirées', icon: '↩️' },
+  { value: 'ALL',       label: 'Toutes' },
+  { value: 'PENDING',   label: 'En attente' },
+  { value: 'ACCEPTED',  label: 'Acceptées' },
+  { value: 'REJECTED',  label: 'Refusées' },
+  { value: 'WITHDRAWN', label: 'Retirées' },
 ]
 
-// ===== COMPUTED =====
-const filteredApplications = computed(() => {
-  if (selectedStatus.value === 'ALL') return applications.value
-  return applications.value.filter(a => a.status === selectedStatus.value)
-})
+const filteredApplications = computed(() =>
+  selectedStatus.value === 'ALL'
+    ? applications.value
+    : applications.value.filter(a => a.status === selectedStatus.value)
+)
 
-const getCountByStatus = (status) => {
-  if (status === 'ALL') return applications.value.length
-  return applications.value.filter(a => a.status === status).length
+const getCountByStatus = (status) =>
+  status === 'ALL'
+    ? applications.value.length
+    : applications.value.filter(a => a.status === status).length
+
+// ── Helpers visuels ─────────────────────────
+const statusLabel = (s) =>
+  ({ PENDING: 'En attente', ACCEPTED: 'Acceptée', REJECTED: 'Refusée', WITHDRAWN: 'Retirée' }[s] || s)
+
+const statusBadge = (s) => ({
+  PENDING:   'bg-amber-50 text-amber-700',
+  ACCEPTED:  'bg-green-50 text-green-700',
+  REJECTED:  'bg-red-50 text-red-600',
+  WITHDRAWN: 'bg-[#F4F4ED] text-[#73726C]',
+}[s] || 'bg-[#F4F4ED] text-[#73726C]')
+
+const statusDot = (s) => ({
+  PENDING:   'bg-amber-400',
+  ACCEPTED:  'bg-green-500',
+  REJECTED:  'bg-red-400',
+  WITHDRAWN: 'bg-[#C4C3BC]',
+}[s] || 'bg-[#C4C3BC]')
+
+// ── Helpers données ─────────────────────────
+const formatAmount = (val) => Number(val || 0).toLocaleString('fr-MA')
+
+const formatBudget = (min, max) => {
+  if (!min && !max) return 'À négocier'
+  if (min && max)   return `${formatAmount(min)} – ${formatAmount(max)}`
+  if (min)          return `Dès ${formatAmount(min)}`
+  return `Jusqu'à ${formatAmount(max)}`
 }
 
-// ===== AXIOS =====
-const authHeaders = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-})
+const formatDate = (iso) => {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
-// ===== CHARGER MES CANDIDATURES → GET /api/applications/my =====
+const timeAgo = (iso) => {
+  if (!iso) return ''
+  const diff = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(diff / 60000)
+  const h = Math.floor(diff / 3600000)
+  const d = Math.floor(diff / 86400000)
+  if (m < 60)  return `il y a ${m}min`
+  if (h < 24)  return `il y a ${h}h`
+  if (d < 30)  return `il y a ${d}j`
+  return formatDate(iso)
+}
+
+const getSkillTags = (skills) =>
+  (skills || '').split(',').map(s => s.trim()).filter(Boolean)
+
+const toggleLetter = (id) => {
+  const idx = expandedLetters.value.indexOf(id)
+  idx === -1 ? expandedLetters.value.push(id) : expandedLetters.value.splice(idx, 1)
+}
+
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 3500)
+}
+
+// ── API ─────────────────────────────────────
 const loadApplications = async () => {
   loading.value = true
   try {
-    const { data } = await axios.get(
-        `${API_URL}/api/applications/my`,
-        authHeaders()
-    )
-    applications.value = data
-  } catch (err) {
-    console.error('loadApplications error:', err)
+    const { data } = await axios.get(`${API_URL}/api/applications/my`, authHeaders())
+    applications.value = data || []
+  } catch {
     showToast('Impossible de charger vos candidatures', 'error')
   } finally {
     loading.value = false
   }
 }
 
-// ===== VOIR UNE OFFRE → GET /api/offers/{id} =====
 const viewOffer = async (offerId) => {
   loadingOffer.value = true
   selectedOffer.value = {}
   try {
-    const { data } = await axios.get(
-        `${API_URL}/api/offers/${offerId}`
-    )
+    const { data } = await axios.get(`${API_URL}/api/offers/${offerId}`)
     selectedOffer.value = data
-  } catch (err) {
-    showToast('Impossible de charger l\'offre', 'error')
+  } catch {
+    showToast("Impossible de charger l'offre", 'error')
     selectedOffer.value = null
   } finally {
     loadingOffer.value = false
   }
 }
 
-// ===== CONFIRMER RETRAIT =====
 const confirmWithdraw = (app) => {
   appToWithdraw.value = app
   showWithdrawModal.value = true
 }
 
-// ===== RETIRER UNE CANDIDATURE → DELETE /api/applications/{id} =====
 const withdrawApplication = async () => {
   withdrawing.value = true
   try {
-    await axios.delete(
-        `${API_URL}/api/applications/${appToWithdraw.value.id}`,
-        authHeaders()
-    )
-
-    // mettre à jour localement
+    await axios.delete(`${API_URL}/api/applications/${appToWithdraw.value.id}`, authHeaders())
     const app = applications.value.find(a => a.id === appToWithdraw.value.id)
     if (app) app.status = 'WITHDRAWN'
-
     showWithdrawModal.value = false
     showToast('Candidature retirée')
-
   } catch (err) {
-    showToast(
-        err.response?.data?.message || 'Erreur lors du retrait',
-        'error'
-    )
+    showToast(err.response?.data?.message || 'Erreur lors du retrait', 'error')
   } finally {
     withdrawing.value = false
   }
 }
 
-// ===== TOGGLE LETTRE =====
-const toggleCoverLetter = (id) => {
-  const index = expandedLetters.value.indexOf(id)
-  if (index === -1) {
-    expandedLetters.value.push(id)
-  } else {
-    expandedLetters.value.splice(index, 1)
-  }
-}
-
-// ===== HELPERS =====
-
-const formatAmount = (amount) => {
-  if (!amount) return '0'
-  return parseFloat(amount).toLocaleString('fr-MA')
-}
-
-const formatBudget = (min, max) => {
-  if (!min && !max) return 'À négocier'
-  if (min && max) return `${formatAmount(min)} - ${formatAmount(max)}`
-  if (min) return `Dès ${formatAmount(min)}`
-  return `Jusqu'à ${formatAmount(max)}`
-}
-
-const formatDate = (date) => {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
-}
-
-const timeAgo = (date) => {
-  if (!date) return ''
-  const diff = Date.now() - new Date(date).getTime()
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-  if (minutes < 60) return `il y a ${minutes}min`
-  if (hours < 24) return `il y a ${hours}h`
-  if (days < 7) return `il y a ${days}j`
-  return formatDate(date)
-}
-
-const getSkillTags = (skills) => {
-  if (!skills) return []
-  return skills.split(',').map(s => s.trim()).filter(s => s.length > 0)
-}
-
-const getStatusLabel = (status) => {
-  const labels = {
-    PENDING: 'En attente',
-    ACCEPTED: 'Acceptée',
-    REJECTED: 'Refusée',
-    WITHDRAWN: 'Retirée',
-  }
-  return labels[status] || status
-}
-
-const getStatusIcon = (status) => {
-  const icons = {
-    PENDING: '⏳',
-    ACCEPTED: '✅',
-    REJECTED: '❌',
-    WITHDRAWN: '↩️',
-  }
-  return icons[status] || '•'
-}
-
-const getStatusClass = (status) => {
-  const classes = {
-    PENDING: 'bg-amber-50 text-amber-700',
-    ACCEPTED: 'bg-brand-50 text-brand-700',
-    REJECTED: 'bg-red-50 text-red-700',
-    WITHDRAWN: 'bg-gray-100 text-gray-500',
-  }
-  return classes[status] || 'bg-gray-100 text-gray-500'
-}
-
-const getCategoryLabel = (category) => {
-  const labels = {
-    WEB_DEVELOPMENT: 'Développement Web',
-    MOBILE_DEVELOPMENT: 'Mobile',
-    DESIGN: 'Design',
-    MARKETING: 'Marketing',
-    WRITING: 'Rédaction',
-    VIDEO: 'Vidéo',
-    TRANSLATION: 'Traduction',
-    DATA_SCIENCE: 'Data Science',
-    OTHER: 'Autre',
-  }
-  return labels[category] || category || 'Autre'
-}
-
-const getCategoryClass = (category) => {
-  const classes = {
-    WEB_DEVELOPMENT: 'bg-blue-50 text-blue-700',
-    MOBILE_DEVELOPMENT: 'bg-purple-50 text-purple-700',
-    DESIGN: 'bg-pink-50 text-pink-700',
-    MARKETING: 'bg-orange-50 text-orange-700',
-    WRITING: 'bg-amber-50 text-amber-700',
-    VIDEO: 'bg-red-50 text-red-700',
-    TRANSLATION: 'bg-cyan-50 text-cyan-700',
-    DATA_SCIENCE: 'bg-green-50 text-green-700',
-    OTHER: 'bg-gray-100 text-gray-600',
-  }
-  return classes[category] || 'bg-gray-100 text-gray-600'
-}
-
-const getCategoryBg = (category) => {
-  const bgs = {
-    WEB_DEVELOPMENT: 'bg-blue-50',
-    MOBILE_DEVELOPMENT: 'bg-purple-50',
-    DESIGN: 'bg-pink-50',
-    MARKETING: 'bg-orange-50',
-    WRITING: 'bg-amber-50',
-    VIDEO: 'bg-red-50',
-    TRANSLATION: 'bg-cyan-50',
-    DATA_SCIENCE: 'bg-green-50',
-    OTHER: 'bg-gray-100',
-  }
-  return bgs[category] || 'bg-gray-100'
-}
-
-const getCategoryIcon = (category) => {
-  const icons = {
-    WEB_DEVELOPMENT: '🌐',
-    MOBILE_DEVELOPMENT: '📱',
-    DESIGN: '🎨',
-    MARKETING: '📈',
-    WRITING: '✍️',
-    VIDEO: '🎬',
-    TRANSLATION: '🌍',
-    DATA_SCIENCE: '📊',
-    OTHER: '💼',
-  }
-  return icons[category] || '💼'
-}
-
-const showToast = (message, type = 'success') => {
-  toast.value = { show: true, message, type }
-  setTimeout(() => toast.value.show = false, 4000)
-}
-
-onMounted(() => {
-  loadApplications()
-})
+onMounted(loadApplications)
 </script>
