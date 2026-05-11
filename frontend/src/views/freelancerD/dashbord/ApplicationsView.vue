@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="max-w-5xl mx-auto space-y-5">
 
     <!-- EN-TÊTE -->
@@ -316,6 +316,8 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 // ===== ÉTAT =====
 const loading = ref(true)
 const withdrawing = ref(false)
@@ -328,7 +330,7 @@ const expandedLetters = ref([])
 const toast = ref({ show: false, message: '', type: 'success' })
 
 // ===== DONNÉES =====
-// GET http://localhost:8083/api/applications/my → List<ApplicationDTO>
+// GET http://localhost:8080/api/applications/my → List<ApplicationDTO>
 const applications = ref([])
 
 // ===== FILTRES STATUT =====
@@ -361,7 +363,7 @@ const loadApplications = async () => {
   loading.value = true
   try {
     const { data } = await axios.get(
-        'http://localhost:8083/api/applications/my',
+        `${API_URL}/api/applications/my`,
         authHeaders()
     )
     applications.value = data
@@ -379,7 +381,7 @@ const viewOffer = async (offerId) => {
   selectedOffer.value = {}
   try {
     const { data } = await axios.get(
-        `http://localhost:8083/api/offers/${offerId}`
+        `${API_URL}/api/offers/${offerId}`
     )
     selectedOffer.value = data
   } catch (err) {
@@ -401,7 +403,7 @@ const withdrawApplication = async () => {
   withdrawing.value = true
   try {
     await axios.delete(
-        `http://localhost:8083/api/applications/${appToWithdraw.value.id}`,
+        `${API_URL}/api/applications/${appToWithdraw.value.id}`,
         authHeaders()
     )
 
