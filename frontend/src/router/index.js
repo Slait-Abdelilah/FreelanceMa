@@ -127,7 +127,7 @@ const router = createRouter({
     routes
 })
 // ===== NAVIGATION GUARD =====
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
     const token = localStorage.getItem('token')
     const user = getUser()
 
@@ -135,10 +135,11 @@ router.beforeEach((to, from, next) => {
     if (token && isTokenExpired(token)) {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
+        localStorage.removeItem('refreshToken')
         if (to.meta.requiresAuth) {
-            return next(user.role === 'CLIENT' ? '/login/client' : '/login/freelancer')
+            return user.role === 'CLIENT' ? '/login/client' : '/login/freelancer'
         }
-        return next()
+        return true
     }
 
     const isAuthenticated = !!token && !!user.role
@@ -149,23 +150,24 @@ router.beforeEach((to, from, next) => {
         if (!isAuthenticated) {
             localStorage.removeItem('token')
             localStorage.removeItem('user')
-            return next(userRole === 'CLIENT' ? '/login/client' : '/login/freelancer')
+            localStorage.removeItem('refreshToken')
+            return userRole === 'CLIENT' ? '/login/client' : '/login/freelancer'
         }
         // mauvais rôle → rediriger vers son propre dashboard
         if (to.meta.requiredRole && userRole !== to.meta.requiredRole) {
-            if (userRole === 'CLIENT') return next('/client/dashboard')
-            if (userRole === 'FREELANCER') return next('/freelancer/dashboard')
-            return next('/')
+            if (userRole === 'CLIENT') return '/client/dashboard'
+            if (userRole === 'FREELANCER') return '/freelancer/dashboard'
+            return '/'
         }
     }
 
     // ===== CAS 2 : page réservée aux invités =====
     if (to.meta.guestOnly && isAuthenticated) {
-        if (userRole === 'CLIENT') return next('/client/dashboard')
-        if (userRole === 'FREELANCER') return next('/freelancer/dashboard')
+        if (userRole === 'CLIENT') return '/client/dashboard'
+        if (userRole === 'FREELANCER') return '/freelancer/dashboard'
     }
 
-    next()
+    return true
 })
 
 export default router

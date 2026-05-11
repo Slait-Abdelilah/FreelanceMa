@@ -441,6 +441,8 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 // ===== ÉTAT =====
 const loading = ref(true)
 const applying = ref(false)
@@ -533,7 +535,7 @@ const loadOffers = async (search = '') => {
     if (search) params.search = search
 
     const { data } = await axios.get(
-        'http://localhost:8080/api/offers',
+        `${API_URL}/api/offers`,
         { params }
     )
     offers.value = data.content ?? data
@@ -611,7 +613,7 @@ const submitApplication = async () => {
   applying.value = true
   try {
     await axios.post(
-        'http://localhost:8080/api/applications',
+        `${API_URL}/api/applications`,
         {
           offerId: selectedOffer.value.id,
           coverLetter: applyForm.value.coverLetter,

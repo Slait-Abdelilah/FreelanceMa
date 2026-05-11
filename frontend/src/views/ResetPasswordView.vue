@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-cream flex items-center justify-center px-6 py-12">
     <div class="w-full max-w-md">
 
@@ -161,6 +161,7 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 
 const route = useRoute()
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const token = ref('')
 const newPassword = ref('')
@@ -224,7 +225,7 @@ const submit = async () => {
   loading.value = true
 
   try {
-    await axios.post('http://localhost:8081/api/auth/reset-password', {
+    await axios.post(`${API_URL}/api/auth/reset-password`, {
       token: token.value,
       newPassword: newPassword.value,
     })

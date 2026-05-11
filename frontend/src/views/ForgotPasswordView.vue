@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-white flex">
 
     <!-- ============ CÔTÉ GAUCHE — VISUEL ============ -->
@@ -303,6 +303,7 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const router = useRouter()
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const currentStep = ref(1)
 const email = ref('')
@@ -353,7 +354,7 @@ const sendCode = async () => {
   loading.value = true
 
   try {
-    await axios.post('http://localhost:8081/api/auth/forgot-password', {
+    await axios.post(`${API_URL}/api/auth/forgot-password`, {
       email: email.value
     })
 
@@ -426,7 +427,7 @@ const verifyCode = async () => {
 
   try {
     // vérifier que le code est valide
-    await axios.post('http://localhost:8081/api/auth/verify-reset-code', {
+    await axios.post(`${API_URL}/api/auth/verify-reset-code`, {
       email: email.value,
       code: code
     })
@@ -461,7 +462,7 @@ const submitNewPassword = async () => {
   loading.value = true
 
   try {
-    await axios.post('http://localhost:8081/api/auth/reset-password', {
+    await axios.post(`${API_URL}/api/auth/reset-password`, {
       token: codeDigits.value.join(''),
       newPassword: newPassword.value
     })

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-cream flex">
 
     <!-- ============ CÔTÉ GAUCHE — VISUEL ============ -->
@@ -253,6 +253,8 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const router = useRouter()
 
 const showPassword = ref(false)
@@ -354,7 +356,7 @@ const submit = async () => {
 
   try {
     // appel vers Spring Boot
-    await axios.post('http://localhost:8081/api/auth/register', {
+    await axios.post(`${API_URL}/api/auth/register`, {
       firstName: form.value.firstName,
       lastName: form.value.lastName,
       email: form.value.email,
