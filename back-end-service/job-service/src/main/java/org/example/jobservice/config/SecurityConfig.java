@@ -27,7 +27,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:8080"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -46,13 +46,26 @@ public class SecurityConfig {
                 .sessionManagement(s -> s
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // routes spécifiques en PREMIER (avant les patterns génériques /{id})
+                        .requestMatchers(HttpMethod.GET, "/api/offers/my").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/offers/{id}/applications").hasRole("CLIENT")
                         // routes publiques
                         .requestMatchers(HttpMethod.GET, "/api/offers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/offers/{id}").permitAll()
-                        // création d'offre : CLIENT uniquement
+                        // offres : CLIENT uniquement
                         .requestMatchers(HttpMethod.POST, "/api/offers").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/api/offers/{id}").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.PATCH, "/api/offers/{id}/close").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/offers/{id}").hasRole("CLIENT")
                         // candidatures : FREELANCER uniquement
                         .requestMatchers(HttpMethod.POST, "/api/applications").hasRole("FREELANCER")
+                        .requestMatchers(HttpMethod.GET, "/api/applications/my").hasRole("FREELANCER")
+                        .requestMatchers(HttpMethod.GET, "/api/applications/{id}").hasRole("FREELANCER")
+                        .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/complete").hasRole("FREELANCER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/applications/{id}").hasRole("FREELANCER")
+                        // accept/reject candidature : CLIENT uniquement
+                        .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/accept").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/reject").hasRole("CLIENT")
                         // tout le reste nécessite d'être connecté
                         .anyRequest().authenticated()
                 )

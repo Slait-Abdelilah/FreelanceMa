@@ -31,6 +31,7 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
             "/api/auth/login",
             "/api/auth/register",
             "/api/auth/refresh",
+            "/api/auth/logout",
             "/api/auth/verify",
             "/api/auth/verify-account",
             "/api/auth/verify-reset-code",

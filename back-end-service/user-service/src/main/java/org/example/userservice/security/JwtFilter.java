@@ -35,14 +35,17 @@ public class JwtFilter extends OncePerRequestFilter {
             response.getWriter().write("{\"message\":\"Token invalide ou expiré\"}");
             return;
         }
-        String email = jwtUtil.extractEmail(token);
-        String role  = jwtUtil.extractRole(token);
+        String email  = jwtUtil.extractEmail(token);
+        String role   = jwtUtil.extractRole(token);
+        Long   userId = jwtUtil.extractUserId(token);
+
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         email,
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_" + role))
                 );
+        authentication.setDetails(userId);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
     }

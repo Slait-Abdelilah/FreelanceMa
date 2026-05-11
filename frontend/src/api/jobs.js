@@ -1,18 +1,26 @@
 import axios from 'axios'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
-export const getJobs = (params) =>
-  axios.get(`${BASE}/api/jobs`, { params })
+// ── Offres ─────────────────────────────────────────────────────────────────
+export const getOffers = (params) =>
+  axios.get(`${BASE}/api/offers`, { params })
 
-export const getJob = (id) =>
-  axios.get(`${BASE}/api/jobs/${id}`)
+export const getOffer = (id) =>
+  axios.get(`${BASE}/api/offers/${id}`)
 
-export const createJob = (data) =>
-  axios.post(`${BASE}/api/jobs`, data)
+export const createOffer = (data) =>
+  axios.post(`${BASE}/api/offers`, data)
 
-export const applyToJob = (jobId) =>
-  axios.post(`${BASE}/api/jobs/${jobId}/apply`)
+// ── Candidatures ───────────────────────────────────────────────────────────
+export const applyToOffer = (data) =>
+  axios.post(`${BASE}/api/applications`, data)
 
 export const getMyApplications = () =>
-  axios.get(`${BASE}/api/applications/me`)
+  axios.get(`${BASE}/api/applications/my`)
+
+export const getApplication = (id) =>
+  axios.get(`${BASE}/api/applications/${id}`)
+
+export const withdrawApplication = (id) =>
+  axios.delete(`${BASE}/api/applications/${id}`)

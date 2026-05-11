@@ -51,4 +51,18 @@ public class ApplicationController {
         applicationService.withdrawApplication(freelancerId, id);
         return ResponseEntity.ok("Candidature retirée");
     }
+
+    // ── CLIENT ─────────────────────────────────────────────────────────────
+
+    @PutMapping("/{id}/accept")
+    public ResponseEntity<ApplicationDTO> accept(Authentication auth, @PathVariable Long id) {
+        Long clientId = (Long) auth.getDetails();
+        return ResponseEntity.ok(applicationService.acceptApplication(clientId, id));
+    }
+
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<ApplicationDTO> reject(Authentication auth, @PathVariable Long id) {
+        Long clientId = (Long) auth.getDetails();
+        return ResponseEntity.ok(applicationService.rejectApplication(clientId, id));
+    }
 }

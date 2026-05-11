@@ -447,10 +447,9 @@ const loadSidebarCounts = async () => {
   ])
 
   if (offersRes.status === 'fulfilled') {
-    const list = offersRes.value.data
-    openOffersCount.value = Array.isArray(list)
-      ? list.filter(o => o.status === 'OPEN').length
-      : 0
+    const data = offersRes.value.data
+    // /api/offers returns a Page<> object; totalElements is the count of all OPEN offers
+    openOffersCount.value = data.totalElements ?? (Array.isArray(data) ? data.filter(o => o.status === 'OPEN').length : 0)
   }
 
   if (appsRes.status === 'fulfilled') {

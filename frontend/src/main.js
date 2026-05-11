@@ -12,7 +12,7 @@ app.use(pinia)
 app.use(router)
 
 // ===== INTERCEPTEUR AXIOS — REFRESH TOKEN =====
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 let isRefreshing = false
 let failedQueue = []
 

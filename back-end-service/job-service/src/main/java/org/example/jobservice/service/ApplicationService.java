@@ -167,6 +167,70 @@ public class ApplicationService {
         });
     }
 
+    public List<ApplicationDTO> getApplicationsForOffer(Long clientId, Long offerId) {
+        Offer offer = offerRepository.findById(offerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Offre introuvable"));
+        if (!offer.getClientId().equals(clientId))
+            throw new ForbiddenException("Accès refusé");
+
+        return applicationRepository.findByOfferIdOrderByCreatedAtDesc(offerId)
+                .stream()
+                .map(app -> toDTO(app, offer.getTitle()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ApplicationDTO acceptApplication(Long clientId, Long applicationId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature introuvable"));
+
+        Offer offer = offerRepository.findById(app.getOfferId())
+                .orElseThrow(() -> new ResourceNotFoundException("Offre introuvable"));
+        if (!offer.getClientId().equals(clientId))
+            throw new ForbiddenException("Accès refusé");
+        if (app.getStatus() != ApplicationStatus.PENDING)
+            throw new ConflictException("Seules les candidatures en attente peuvent être acceptées");
+
+        app.setStatus(ApplicationStatus.ACCEPTED);
+        applicationRepository.save(app);
+
+        notificationService.create(
+                app.getFreelancerId(),
+                NotificationType.APPLICATION_ACCEPTED,
+                "Candidature acceptée",
+                "Votre candidature pour « " + offer.getTitle() + " » a été acceptée. Bonne mission !",
+                offer.getId(), app.getId()
+        );
+
+        return toDTO(app, offer.getTitle());
+    }
+
+    @Transactional
+    public ApplicationDTO rejectApplication(Long clientId, Long applicationId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature introuvable"));
+
+        Offer offer = offerRepository.findById(app.getOfferId())
+                .orElseThrow(() -> new ResourceNotFoundException("Offre introuvable"));
+        if (!offer.getClientId().equals(clientId))
+            throw new ForbiddenException("Accès refusé");
+        if (app.getStatus() != ApplicationStatus.PENDING)
+            throw new ConflictException("Seules les candidatures en attente peuvent être refusées");
+
+        app.setStatus(ApplicationStatus.REJECTED);
+        applicationRepository.save(app);
+
+        notificationService.create(
+                app.getFreelancerId(),
+                NotificationType.APPLICATION_REJECTED,
+                "Candidature non retenue",
+                "Votre candidature pour « " + offer.getTitle() + " » n'a pas été retenue cette fois.",
+                offer.getId(), app.getId()
+        );
+
+        return toDTO(app, offer.getTitle());
+    }
+
     public ApplicationDTO toDTO(Application a, String offerTitle) {
         return ApplicationDTO.builder()
                 .id(a.getId())

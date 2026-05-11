@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl mx-auto space-y-5">
+  <div class="space-y-5" style="max-width: calc(100% - 40px); margin: 0 auto;">
 
     <!-- HEADER -->
     <div class="flex items-center justify-between">

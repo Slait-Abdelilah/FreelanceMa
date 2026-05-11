@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.example.backfreelance.dto.*;
 import org.example.backfreelance.service.AuthService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -77,5 +78,18 @@ public class AuthController {
     public ResponseEntity<String> logout(@Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(request.getRefreshToken());
         return ResponseEntity.ok("Déconnecté avec succès");
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(Authentication auth,
+                                                  @Valid @RequestBody UpdatePasswordRequest request) {
+        authService.changePassword(auth.getName(), request);
+        return ResponseEntity.ok("Mot de passe modifié avec succès");
+    }
+
+    @DeleteMapping("/account")
+    public ResponseEntity<String> deleteAccount(Authentication auth) {
+        authService.deleteAccount(auth.getName());
+        return ResponseEntity.ok("Compte supprimé avec succès");
     }
 }

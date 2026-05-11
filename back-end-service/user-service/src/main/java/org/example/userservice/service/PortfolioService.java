@@ -3,12 +3,9 @@ package org.example.userservice.service;
 import lombok.RequiredArgsConstructor;
 import org.example.userservice.dto.CreatePortfolioRequest;
 import org.example.userservice.dto.PortfolioDTO;
-import org.example.userservice.entity.Freelancer;
 import org.example.userservice.entity.Portfolio;
-import org.example.userservice.entity.User;
 import org.example.userservice.exception.AppException;
 import org.example.userservice.repository.PortfolioRepository;
-import org.example.userservice.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,20 +18,17 @@ import java.util.stream.Collectors;
 public class PortfolioService {
 
     private final PortfolioRepository portfolioRepository;
-    private final UserRepository userRepository;
 
-    public List<PortfolioDTO> getMyPortfolio(String email) {
-        Freelancer f = getFreelancer(email);
-        return portfolioRepository.findByFreelancerIdOrderByDisplayOrderAsc(f.getId())
+    public List<PortfolioDTO> getMyPortfolio(Long freelancerId) {
+        return portfolioRepository.findByFreelancerIdOrderByDisplayOrderAsc(freelancerId)
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Transactional
-    public PortfolioDTO addProject(String email, CreatePortfolioRequest request) {
-        Freelancer f = getFreelancer(email);
-        int order = portfolioRepository.countByFreelancerId(f.getId());
+    public PortfolioDTO addProject(Long freelancerId, CreatePortfolioRequest request) {
+        int order = portfolioRepository.countByFreelancerId(freelancerId);
         Portfolio p = Portfolio.builder()
-                .freelancerId(f.getId()).title(request.getTitle())
+                .freelancerId(freelancerId).title(request.getTitle())
                 .description(request.getDescription()).technologies(request.getTechnologies())
                 .imageUrl(request.getImageUrl()).projectUrl(request.getProjectUrl())
                 .githubUrl(request.getGithubUrl()).displayOrder(order).build();
@@ -42,11 +36,10 @@ public class PortfolioService {
     }
 
     @Transactional
-    public PortfolioDTO updateProject(String email, Long projectId, CreatePortfolioRequest request) {
-        Freelancer f = getFreelancer(email);
+    public PortfolioDTO updateProject(Long freelancerId, Long projectId, CreatePortfolioRequest request) {
         Portfolio p = portfolioRepository.findById(projectId)
                 .orElseThrow(() -> new AppException("Projet introuvable", HttpStatus.NOT_FOUND));
-        if (!p.getFreelancerId().equals(f.getId()))
+        if (!p.getFreelancerId().equals(freelancerId))
             throw new AppException("Accès refusé", HttpStatus.FORBIDDEN);
 
         if (request.getTitle() != null)        p.setTitle(request.getTitle());
@@ -59,11 +52,10 @@ public class PortfolioService {
     }
 
     @Transactional
-    public void deleteProject(String email, Long projectId) {
-        Freelancer f = getFreelancer(email);
+    public void deleteProject(Long freelancerId, Long projectId) {
         Portfolio p = portfolioRepository.findById(projectId)
                 .orElseThrow(() -> new AppException("Projet introuvable", HttpStatus.NOT_FOUND));
-        if (!p.getFreelancerId().equals(f.getId()))
+        if (!p.getFreelancerId().equals(freelancerId))
             throw new AppException("Accès refusé", HttpStatus.FORBIDDEN);
         portfolioRepository.delete(p);
     }
@@ -71,14 +63,6 @@ public class PortfolioService {
     public List<PortfolioDTO> getPublicPortfolio(Long freelancerId) {
         return portfolioRepository.findByFreelancerIdOrderByDisplayOrderAsc(freelancerId)
                 .stream().map(this::toDTO).collect(Collectors.toList());
-    }
-
-    private Freelancer getFreelancer(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException("Utilisateur introuvable", HttpStatus.NOT_FOUND));
-        if (!(user instanceof Freelancer f))
-            throw new AppException("Action réservée aux freelancers", HttpStatus.FORBIDDEN);
-        return f;
     }
 
     private PortfolioDTO toDTO(Portfolio p) {

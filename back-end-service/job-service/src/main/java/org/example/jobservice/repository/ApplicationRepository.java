@@ -18,6 +18,9 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     // vérifier si un freelancer a déjà postulé
     boolean existsByOfferIdAndFreelancerId(Long offerId, Long freelancerId);
 
+    // vérifier si une offre a des candidatures
+    boolean existsByOfferId(Long offerId);
+
     // candidatures par statut
     List<Application> findByFreelancerIdAndStatusOrderByCreatedAtDesc(
             Long freelancerId, ApplicationStatus status

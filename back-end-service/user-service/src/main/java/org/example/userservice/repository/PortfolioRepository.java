@@ -7,4 +7,5 @@ import java.util.List;
 public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
     List<Portfolio> findByFreelancerIdOrderByDisplayOrderAsc(Long freelancerId);
     int countByFreelancerId(Long freelancerId);
+    void deleteByFreelancerId(Long freelancerId);
 }

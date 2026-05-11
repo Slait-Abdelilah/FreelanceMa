@@ -3,13 +3,11 @@ package org.example.userservice.service;
 import lombok.RequiredArgsConstructor;
 import org.example.userservice.dto.*;
 import org.example.userservice.entity.Transaction;
-import org.example.userservice.entity.User;
 import org.example.userservice.entity.Wallet;
 import org.example.userservice.enums.TransactionStatus;
 import org.example.userservice.enums.TransactionType;
 import org.example.userservice.exception.AppException;
 import org.example.userservice.repository.TransactionRepository;
-import org.example.userservice.repository.UserRepository;
 import org.example.userservice.repository.WalletRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,11 +23,9 @@ public class WalletService {
 
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
-    private final UserRepository userRepository;
 
-    public WalletSummaryDTO getMyWallet(String email) {
-        User user = getUser(email);
-        Wallet wallet = getOrCreateWallet(user.getId());
+    public WalletSummaryDTO getMyWallet(Long userId) {
+        Wallet wallet = getOrCreateWallet(userId);
         List<TransactionDTO> recent = transactionRepository
                 .findTop10ByWalletIdOrderByCreatedAtDesc(wallet.getId())
                 .stream().map(this::toTransactionDTO).collect(Collectors.toList());
@@ -39,17 +35,15 @@ public class WalletService {
                 .build();
     }
 
-    public List<TransactionDTO> getAllTransactions(String email) {
-        User user = getUser(email);
-        Wallet wallet = getOrCreateWallet(user.getId());
+    public List<TransactionDTO> getAllTransactions(Long userId) {
+        Wallet wallet = getOrCreateWallet(userId);
         return transactionRepository.findByWalletIdOrderByCreatedAtDesc(wallet.getId())
                 .stream().map(this::toTransactionDTO).collect(Collectors.toList());
     }
 
     @Transactional
-    public TransactionDTO requestWithdrawal(String email, WithdrawalRequest request) {
-        User user = getUser(email);
-        Wallet wallet = getOrCreateWallet(user.getId());
+    public TransactionDTO requestWithdrawal(Long userId, WithdrawalRequest request) {
+        Wallet wallet = getOrCreateWallet(userId);
 
         validateIban(request.getIban());
 
@@ -94,11 +88,6 @@ public class WalletService {
         if (iban == null || iban.length() < 8) return "****";
         String n = iban.replaceAll("\\s+", "").toUpperCase();
         return n.substring(0, 4) + "*".repeat(Math.max(0, n.length() - 8)) + n.substring(n.length() - 4);
-    }
-
-    private User getUser(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException("Utilisateur introuvable", HttpStatus.NOT_FOUND));
     }
 
     private WalletDTO toWalletDTO(Wallet w) {

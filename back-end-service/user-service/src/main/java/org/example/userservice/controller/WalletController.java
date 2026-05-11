@@ -19,17 +19,21 @@ public class WalletController {
 
     @GetMapping
     public ResponseEntity<WalletSummaryDTO> getMyWallet(Authentication auth) {
-        return ResponseEntity.ok(walletService.getMyWallet(auth.getName()));
+        return ResponseEntity.ok(walletService.getMyWallet(getUserId(auth)));
     }
 
     @GetMapping("/transactions")
     public ResponseEntity<List<TransactionDTO>> getAllTransactions(Authentication auth) {
-        return ResponseEntity.ok(walletService.getAllTransactions(auth.getName()));
+        return ResponseEntity.ok(walletService.getAllTransactions(getUserId(auth)));
     }
 
     @PostMapping("/withdraw")
     public ResponseEntity<TransactionDTO> requestWithdrawal(Authentication auth,
                                                              @Valid @RequestBody WithdrawalRequest request) {
-        return ResponseEntity.ok(walletService.requestWithdrawal(auth.getName(), request));
+        return ResponseEntity.ok(walletService.requestWithdrawal(getUserId(auth), request));
+    }
+
+    private Long getUserId(Authentication auth) {
+        return (Long) auth.getDetails();
     }
 }

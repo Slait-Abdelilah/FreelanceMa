@@ -20,7 +20,12 @@ import RegisterFreelancerView from '@/views/freelancerLog/RegisterFreelancerView
 import LoginFreelancerView from '@/views/freelancerLog/LoginFreelancerView.vue'
 import OnboardingFreelancerView from '@/views/freelancerLog/OnboardingFreelancerView.vue'
 // ===== CLIENT DASHBOARD =====
-import ClientDashboard from '@/views/clientsD/dashbord/ClientDashboard.vue'
+import ClientDashboardLayout from '@/views/clientsD/dashbord/ClientDashboardLayout.vue'
+import ClientHomeView from '@/views/clientsD/dashbord/ClientHomeView.vue'
+import ClientOffersView from '@/views/clientsD/dashbord/ClientOffersView.vue'
+import ClientApplicationsView from '@/views/clientsD/dashbord/ClientApplicationsView.vue'
+import ClientMissionsView from '@/views/clientsD/dashbord/ClientMissionsView.vue'
+import ClientSettingsView from '@/views/clientsD/dashbord/ClientSettingsView.vue'
 // ===== FREELANCER DASHBOARD =====
 import FreelancerDashboardLayout from '@/views/freelancerD/dashbord/FreelancerDashboardLayout.vue'
 import FreelancerHomeView from '@/views/freelancerD/dashbord/HomeView.vue'
@@ -96,9 +101,17 @@ const routes = [
     },
     // ===== CLIENT DASHBOARD =====
     {
-        path: '/client/dashboard',
-        component: ClientDashboard,
-        meta: { requiresAuth: true, requiredRole: 'CLIENT' }
+        path: '/client',
+        component: ClientDashboardLayout,
+        meta: { requiresAuth: true, requiredRole: 'CLIENT' },
+        children: [
+            { path: '', redirect: '/client/dashboard' },
+            { path: 'dashboard', component: ClientHomeView },
+            { path: 'offers', component: ClientOffersView },
+            { path: 'applications', component: ClientApplicationsView },
+            { path: 'missions', component: ClientMissionsView },
+            { path: 'settings', component: ClientSettingsView },
+        ]
     },
     // ===== FREELANCER DASHBOARD =====
     {

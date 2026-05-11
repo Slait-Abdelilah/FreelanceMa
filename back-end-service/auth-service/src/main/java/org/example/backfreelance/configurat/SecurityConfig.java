@@ -60,11 +60,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:8080"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of(
                 "Authorization", "Content-Type", "Accept",
-                "Origin", "X-Requested-With", "Cache-Control"
+                "Origin", "X-Requested-With", "Cache-Control",
+                "X-User-Id", "X-User-Role", "X-User-Email"
         ));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
@@ -92,6 +93,7 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // routes publiques auth
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
