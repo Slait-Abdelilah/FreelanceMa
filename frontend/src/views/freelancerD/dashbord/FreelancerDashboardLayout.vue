@@ -432,47 +432,77 @@ const mainItems = [
   },
 ]
 
-const workspaceItems = [
+// ── Compteurs sidebar ─────────────────────────────────────────────────────
+const openOffersCount    = ref(null)   // null = chargement en cours
+const applicationsCount  = ref(null)
+const activeMissionsCount = ref(null)
+
+const loadSidebarCounts = async () => {
+  const token = localStorage.getItem('token')
+  const headers = { Authorization: `Bearer ${token}` }
+
+  const [offersRes, appsRes] = await Promise.allSettled([
+    axios.get('http://localhost:8080/api/offers', { headers }),
+    axios.get('http://localhost:8080/api/applications/my', { headers }),
+  ])
+
+  if (offersRes.status === 'fulfilled') {
+    const list = offersRes.value.data
+    openOffersCount.value = Array.isArray(list)
+      ? list.filter(o => o.status === 'OPEN').length
+      : 0
+  }
+
+  if (appsRes.status === 'fulfilled') {
+    const list = appsRes.value.data
+    applicationsCount.value  = list.length
+    activeMissionsCount.value = list.filter(a => a.status === 'ACCEPTED').length
+  }
+}
+
+const fmt = (n) => n === null ? null : n > 99 ? '99+' : n > 0 ? String(n) : null
+
+const workspaceItems = computed(() => [
   {
     path: '/freelancer/explore',
     label: 'Explorer',
     icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>',
-    badge: '42'
+    badge: fmt(openOffersCount.value),
   },
   {
     path: '/freelancer/applications',
     label: 'Mes candidatures',
     icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
-    badge: '5'
+    badge: fmt(applicationsCount.value),
   },
   {
     path: '/freelancer/active-missions',
     label: 'Missions actives',
     icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
-    badge: '3',
-    urgent: true
+    badge: fmt(activeMissionsCount.value),
+    urgent: activeMissionsCount.value > 0,
   },
   {
     path: '/freelancer/favorites',
     label: 'Favoris',
-    icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.32.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>'
+    icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.32.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>',
   },
-]
+])
 
-const communicationItems = [
+const communicationItems = computed(() => [
   {
     path: '/freelancer/messages',
     label: 'Messages',
     icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>',
-    badge: '3',
-    urgent: true
   },
   {
     path: '/freelancer/notifications',
     label: 'Notifications',
-    icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>'
+    icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>',
+    badge: fmt(unreadCount.value),
+    urgent: unreadCount.value > 0,
   },
-]
+])
 
 const accountItems = [
   {
@@ -543,8 +573,8 @@ let pollInterval = null
 // pour mobile
 const allSections = computed(() => [
   { title: '', items: mainItems },
-  { title: 'Workspace', items: workspaceItems },
-  { title: 'Communication', items: communicationItems },
+  { title: 'Workspace', items: workspaceItems.value },
+  { title: 'Communication', items: communicationItems.value },
   { title: 'Compte', items: accountItems },
 ])
 
@@ -569,7 +599,11 @@ watch(() => route.path, (path) => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   loadUnreadCount()
-  pollInterval = setInterval(loadUnreadCount, 30000)
+  loadSidebarCounts()
+  pollInterval = setInterval(() => {
+    loadUnreadCount()
+    loadSidebarCounts()
+  }, 30000)
 })
 
 onUnmounted(() => {
