@@ -39,6 +39,12 @@ public class ApplicationController {
         return ResponseEntity.ok(applicationService.getApplicationById(freelancerId, id));
     }
 
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<ApplicationDTO> complete(Authentication auth, @PathVariable Long id) {
+        Long freelancerId = (Long) auth.getDetails();
+        return ResponseEntity.ok(applicationService.completeApplication(freelancerId, id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> withdraw(Authentication auth, @PathVariable Long id) {
         Long freelancerId = (Long) auth.getDetails();

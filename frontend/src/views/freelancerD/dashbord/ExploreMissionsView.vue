@@ -177,9 +177,18 @@
               {{ formatDate(offer.deadline) }}
             </span>
           </div>
-          <span class="text-[11px] text-[#9C9A92]">
-            {{ timeAgo(offer.createdAt) }}
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] text-[#9C9A92]">{{ timeAgo(offer.createdAt) }}</span>
+            <button @click.stop="toggleFavorite(offer.id)"
+                    class="p-1 rounded-md hover:bg-[#F4F4ED] transition"
+                    :title="savedOffers.has(offer.id) ? 'Retirer des favoris' : 'Sauvegarder'">
+              <svg class="w-4 h-4 transition"
+                   :class="savedOffers.has(offer.id) ? 'text-red-500 fill-red-500' : 'text-[#9C9A92]'"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -234,10 +243,20 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-4 mt-2 text-[11px] text-[#9C9A92]">
-              <span>{{ offer.applicationsCount }} candidats</span>
-              <span v-if="offer.deadline">Deadline : {{ formatDate(offer.deadline) }}</span>
-              <span>{{ timeAgo(offer.createdAt) }}</span>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-4 text-[11px] text-[#9C9A92]">
+                <span>{{ offer.applicationsCount }} candidats</span>
+                <span v-if="offer.deadline">Deadline : {{ formatDate(offer.deadline) }}</span>
+                <span>{{ timeAgo(offer.createdAt) }}</span>
+              </div>
+              <button @click.stop="toggleFavorite(offer.id)"
+                      class="p-1 rounded-md hover:bg-[#F4F4ED] transition flex-shrink-0">
+                <svg class="w-4 h-4 transition"
+                     :class="savedOffers.has(offer.id) ? 'text-red-500 fill-red-500' : 'text-[#9C9A92]'"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -276,11 +295,22 @@
               {{ selectedOffer.title }}
             </h2>
           </div>
-          <button @click="selectedOffer = null" class="p-1.5 hover:bg-[#F4F4ED] rounded-md flex-shrink-0">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button @click.stop="toggleFavorite(selectedOffer.id)"
+                    class="p-1.5 hover:bg-[#F4F4ED] rounded-md transition"
+                    :title="savedOffers.has(selectedOffer.id) ? 'Retirer des favoris' : 'Sauvegarder'">
+              <svg class="w-5 h-5 transition"
+                   :class="savedOffers.has(selectedOffer.id) ? 'text-red-500 fill-red-500' : 'text-[#9C9A92]'"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+              </svg>
+            </button>
+            <button @click="selectedOffer = null" class="p-1.5 hover:bg-[#F4F4ED] rounded-md">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- body modal -->
@@ -451,6 +481,7 @@ const selectedOffer = ref(null)
 const alreadyApplied = ref(false)
 const applyError = ref('')
 const toast = ref({ show: false, message: '', type: 'success' })
+const savedOffers = ref(new Set())
 
 // ===== FILTRES =====
 const searchQuery = ref('')
@@ -732,7 +763,32 @@ const showToast = (message, type = 'success') => {
   setTimeout(() => toast.value.show = false, 4000)
 }
 
+// ===== FAVORIS =====
+const loadFavorites = async () => {
+  try {
+    const { data } = await axios.get(`${API_URL}/api/favorites`, authHeaders())
+    savedOffers.value = new Set(data.map(f => f.offerId))
+  } catch { /* silencieux */ }
+}
+
+const toggleFavorite = async (offerId) => {
+  try {
+    const { data } = await axios.post(`${API_URL}/api/favorites/${offerId}/toggle`, {}, authHeaders())
+    if (data.saved) {
+      savedOffers.value.add(offerId)
+      showToast('Offre sauvegardée dans vos favoris')
+    } else {
+      savedOffers.value.delete(offerId)
+      showToast('Retiré des favoris')
+    }
+    savedOffers.value = new Set(savedOffers.value)
+  } catch {
+    showToast('Erreur lors de la sauvegarde', 'error')
+  }
+}
+
 onMounted(() => {
   loadOffers()
+  loadFavorites()
 })
 </script>

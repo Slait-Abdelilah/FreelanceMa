@@ -220,25 +220,26 @@
     <main class="flex-1 flex flex-col min-w-0">
 
       <!-- TOPBAR -->
-      <header class="h-14 bg-white border-b border-[#EBEBE5] sticky top-0 z-30 flex items-center px-5 lg:px-7 gap-4">
+      <header class="h-12 bg-white border-b border-[#EBEBE5] sticky top-0 z-30 flex items-center px-4 lg:px-6 gap-3">
 
         <!-- burger mobile -->
         <button @click="mobileMenuOpen = true"
                 class="lg:hidden p-1.5 hover:bg-[#F4F4ED] rounded-md transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-[#73726C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
         </button>
 
         <!-- BREADCRUMB -->
         <div class="flex items-center gap-1.5 text-[13px] min-w-0">
-          <RouterLink to="/freelancer/dashboard" class="text-[#73726C] hover:text-ink transition">
-            Espace freelancer
+          <RouterLink to="/freelancer/dashboard"
+                      class="text-[#9C9A92] hover:text-ink transition hidden sm:block">
+            Freelancer
           </RouterLink>
-          <svg class="w-3.5 h-3.5 text-[#B4B2A9] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3 h-3 text-[#D3D1C7] flex-shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
-          <span class="font-semibold text-ink truncate">{{ pageTitle }}</span>
+          <span class="font-medium text-ink truncate">{{ pageTitle }}</span>
         </div>
 
         <div class="flex-1"></div>
@@ -246,59 +247,62 @@
         <!-- ACTIONS DROITE -->
         <div class="flex items-center gap-1">
 
-          <!-- statut disponibilité -->
-          <button class="hidden md:flex items-center gap-2 pl-2.5 pr-3 py-1.5 rounded-md hover:bg-[#F4F4ED] transition group">
-            <span class="relative flex w-2 h-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-            </span>
-            <span class="text-[12px] font-medium text-[#5F5E5A] group-hover:text-ink">Disponible</span>
+          <!-- disponibilité -->
+          <button @click="available = !available"
+                  class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md border transition text-[12px] font-medium"
+                  :class="available
+                    ? 'border-[#EBEBE5] text-[#5F5E5A] hover:border-[#D3D1C7]'
+                    : 'border-[#EBEBE5] text-[#9C9A92] hover:border-[#D3D1C7]'">
+            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors"
+                  :class="available ? 'bg-green-500' : 'bg-[#D3D1C7]'"></span>
+            {{ available ? 'Disponible' : 'Indisponible' }}
           </button>
 
-          <div class="hidden md:block w-px h-5 bg-[#EBEBE5] mx-1"></div>
+          <div class="hidden md:block w-px h-4 bg-[#EBEBE5] mx-0.5"></div>
 
-          <!-- bouton postuler → explore -->
+          <!-- explorer missions -->
           <RouterLink to="/freelancer/explore"
-                      class="hidden md:flex items-center gap-1.5 bg-ink hover:bg-[#1A1A18] text-white text-[12px] font-semibold px-3 py-1.5 rounded-md transition">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                      class="hidden md:flex items-center gap-1.5 bg-ink hover:bg-[#1A1A18] text-white text-[12px] font-medium px-3 py-1.5 rounded-md transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
-            <span>Postuler</span>
+            Explorer
           </RouterLink>
 
-          <div class="hidden md:block w-px h-5 bg-[#EBEBE5] mx-1"></div>
+          <div class="w-px h-4 bg-[#EBEBE5] mx-0.5"></div>
 
           <!-- messages -->
           <RouterLink to="/freelancer/messages"
                       class="relative p-1.5 hover:bg-[#F4F4ED] rounded-md transition group">
-            <svg class="w-[18px] h-[18px] text-[#73726C] group-hover:text-ink transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+            <svg class="w-4 h-4 text-[#73726C] group-hover:text-ink transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
             </svg>
-            <span class="absolute top-1 right-1 w-1.5 h-1.5 bg-brand-500 rounded-full ring-2 ring-white"></span>
           </RouterLink>
 
           <!-- notifications -->
           <RouterLink to="/freelancer/notifications"
                       class="relative p-1.5 hover:bg-[#F4F4ED] rounded-md transition group">
-            <svg class="w-[18px] h-[18px] text-[#73726C] group-hover:text-ink transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+            <svg class="w-4 h-4 text-[#73726C] group-hover:text-ink transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
             <span v-if="unreadCount > 0"
-                  class="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] bg-brand-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 ring-2 ring-white">
-              {{ unreadCount }}
+                  class="absolute top-0.5 right-0.5 w-[14px] h-[14px] bg-ink text-white text-[8px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+              {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
           </RouterLink>
 
-          <div class="w-px h-5 bg-[#EBEBE5] mx-1"></div>
+          <div class="w-px h-4 bg-[#EBEBE5] mx-0.5"></div>
 
           <!-- profil -->
           <div ref="profileContainer" class="relative">
-            <button @click.stop="profileOpen = !profileOpen; notifOpen = false"
-                    class="flex items-center gap-1.5 p-0.5 hover:bg-[#F4F4ED] rounded-md transition">
-              <div class="w-7 h-7 bg-gradient-to-br from-brand-500 to-brand-700 rounded-md flex items-center justify-center text-[10px] font-bold text-white">
+            <button @click.stop="profileOpen = !profileOpen"
+                    class="flex items-center gap-1.5 px-1 py-0.5 hover:bg-[#F4F4ED] rounded-md transition">
+              <!-- avatar initiales -->
+              <div class="w-6 h-6 bg-[#F0EFE6] border border-[#EBEBE5] rounded-md flex items-center justify-center text-[10px] font-semibold text-ink">
                 {{ userInitials }}
               </div>
-              <svg class="w-3.5 h-3.5 text-[#9C9A92] mr-1 transition-transform"
+              <span class="hidden lg:block text-[13px] font-medium text-ink max-w-[100px] truncate">{{ userFirstName }}</span>
+              <svg class="w-3 h-3 text-[#9C9A92] transition-transform"
                    :class="profileOpen ? 'rotate-180' : ''"
                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
@@ -306,45 +310,51 @@
             </button>
 
             <!-- dropdown profil -->
-            <div v-if="profileOpen"
-                 @click.stop
-                 class="absolute right-0 top-full mt-2 w-[280px] bg-white rounded-xl shadow-lg ring-1 ring-[#EBEBE5] overflow-hidden z-40 animate-fade-up">
+            <Transition enter-active-class="transition duration-100" enter-from-class="opacity-0 scale-95 -translate-y-1"
+                        leave-active-class="transition duration-75" leave-to-class="opacity-0 scale-95 -translate-y-1">
+              <div v-if="profileOpen"
+                   @click.stop
+                   class="absolute right-0 top-full mt-1.5 w-[240px] bg-white rounded-xl border border-[#EBEBE5] shadow-lg overflow-hidden z-40">
 
-              <div class="px-4 py-3.5 border-b border-[#EBEBE5]">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-700 rounded-lg flex items-center justify-center text-white text-[12px] font-bold">
-                    {{ userInitials }}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-[13px] font-semibold text-ink truncate">{{ userName }}</div>
-                    <div class="text-[11px] text-[#73726C] truncate">{{ userEmail }}</div>
+                <!-- user info -->
+                <div class="px-4 py-3 border-b border-[#EBEBE5]">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 bg-[#F0EFE6] border border-[#EBEBE5] rounded-lg flex items-center justify-center text-[12px] font-semibold text-ink flex-shrink-0">
+                      {{ userInitials }}
+                    </div>
+                    <div class="min-w-0">
+                      <div class="text-[13px] font-semibold text-ink truncate">{{ userName }}</div>
+                      <div class="text-[11px] text-[#9C9A92] truncate">{{ userEmail }}</div>
+                    </div>
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-1.5 mt-3">
-                  <div class="bg-[#FAFAF7] rounded-lg px-2.5 py-2">
-                    <div class="text-[10px] text-[#9C9A92] font-medium">Gains</div>
-                    <div class="text-[13px] font-bold text-ink mt-0.5">12,450 <span class="text-[10px] text-[#73726C] font-normal">DH</span></div>
-                  </div>
-                  <div class="bg-[#FAFAF7] rounded-lg px-2.5 py-2">
-                    <div class="text-[10px] text-[#9C9A92] font-medium">Note</div>
-                    <div class="text-[13px] font-bold text-ink mt-0.5">4.9 <span class="text-[10px] text-amber-500">★</span></div>
-                  </div>
+                <!-- navigation links -->
+                <div class="py-1.5">
+                  <RouterLink v-for="item in profileMenu"
+                              :key="item.path"
+                              :to="item.path"
+                              @click="profileOpen = false"
+                              class="flex items-center gap-2.5 px-3 py-1.5 mx-1.5 rounded-md text-[13px] text-[#5F5E5A] hover:bg-[#F4F4ED] hover:text-ink transition">
+                    <span v-html="item.icon" class="w-[14px] h-[14px] text-[#9C9A92] flex-shrink-0"></span>
+                    <span class="flex-1">{{ item.label }}</span>
+                    <kbd v-if="item.shortcut" class="text-[10px] text-[#9C9A92] bg-[#F4F4ED] rounded px-1 py-0.5">{{ item.shortcut }}</kbd>
+                  </RouterLink>
                 </div>
-              </div>
 
-              <div class="py-1.5">
-                <RouterLink v-for="item in profileMenu"
-                            :key="item.path"
-                            :to="item.path"
-                            @click="profileOpen = false"
-                            class="flex items-center gap-2.5 px-3 py-1.5 mx-1.5 rounded-md text-[13px] text-[#5F5E5A] hover:bg-[#F4F4ED] hover:text-ink transition">
-                  <span v-html="item.icon" class="w-[15px] h-[15px] text-[#73726C]"></span>
-                  <span class="flex-1">{{ item.label }}</span>
-                  <kbd v-if="item.shortcut" class="text-[10px] text-[#9C9A92] bg-[#F4F4ED] rounded px-1 py-0.5 font-medium">{{ item.shortcut }}</kbd>
-                </RouterLink>
+                <!-- déconnexion -->
+                <div class="border-t border-[#EBEBE5] py-1.5">
+                  <button @click="logout; profileOpen = false"
+                          class="w-full flex items-center gap-2.5 px-3 py-1.5 mx-auto text-left rounded-md text-[13px] text-red-600 hover:bg-red-50 transition" style="width: calc(100% - 12px); margin: 0 6px;">
+                    <svg class="w-[14px] h-[14px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    Se déconnecter
+                  </button>
+                </div>
+
               </div>
-            </div>
+            </Transition>
           </div>
 
         </div>
@@ -371,16 +381,18 @@ const router = useRouter()
 const mobileMenuOpen = ref(false)
 const profileOpen = ref(false)
 const profileContainer = ref(null)
+const available = ref(true)
 
 // infos utilisateur
 const authStore = useAuthStore()
-const userEmail = computed(() => authStore.user?.email || 'freelancer@freelancema.ma')
+const userEmail = computed(() => authStore.user?.email || '')
 const userName = computed(() => {
-  const name = userEmail.value.split('@')[0].replace(/\./g, ' ')
+  const name = userEmail.value.split('@')[0].replace(/[._]/g, ' ')
   return name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 })
+const userFirstName = computed(() => userName.value.split(' ')[0])
 const userInitials = computed(() => {
-  return userName.value.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  return userName.value.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '—'
 })
 
 // route active
@@ -511,47 +523,7 @@ const profileMenu = [
   },
 ]
 
-// notifications
-const notifications = ref([
-  {
-    id: 1,
-    icon: '🎯',
-    iconBg: 'bg-brand-50',
-    title: 'Nouvelle mission compatible',
-    message: 'Une mission "Développement Vue.js + Spring Boot" matche à 95% votre profil',
-    time: 'il y a 5 min',
-    read: false
-  },
-  {
-    id: 2,
-    icon: '💬',
-    iconBg: 'bg-blue-50',
-    title: 'Message d\'Ahmed Bennani',
-    message: 'Salam, as-tu reçu les specs du projet ?',
-    time: 'il y a 2h',
-    read: false
-  },
-  {
-    id: 3,
-    icon: '💰',
-    iconBg: 'bg-amber-50',
-    title: 'Paiement reçu',
-    message: '+3,500 DH pour la mission "Refonte site e-commerce"',
-    time: 'hier, 14:30',
-    read: true
-  },
-  {
-    id: 4,
-    icon: '⭐',
-    iconBg: 'bg-purple-50',
-    title: 'Nouvelle évaluation',
-    message: 'Sarah K. vous a noté 5/5 : "Travail exceptionnel"',
-    time: 'il y a 2 jours',
-    read: true
-  },
-])
-
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
+const unreadCount = ref(0)
 
 // pour mobile
 const allSections = computed(() => [

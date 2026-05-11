@@ -17,6 +17,7 @@ public class ApplicationDTO {
     private Integer proposedDays;
     private String status;
     private LocalDateTime createdAt;
+    private LocalDateTime completedAt;
     private String offerTitle;
 
     private String offerCategory;

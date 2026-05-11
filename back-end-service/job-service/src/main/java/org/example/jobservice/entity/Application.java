@@ -39,6 +39,7 @@ public class Application {
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
     private LocalDateTime createdAt;
+    private LocalDateTime completedAt;
 
     @PrePersist
     protected void onCreate() {

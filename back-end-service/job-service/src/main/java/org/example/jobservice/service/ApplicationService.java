@@ -68,6 +68,7 @@ public class ApplicationService {
                             .proposedDays(app.getProposedDays())
                             .status(app.getStatus().name())
                             .createdAt(app.getCreatedAt())
+                            .completedAt(app.getCompletedAt())
                             .offerTitle(offer != null ? offer.getTitle() : "Offre supprimée")
                             .offerCategory(offer != null && offer.getCategory() != null
                                     ? offer.getCategory().name() : null)
@@ -90,6 +91,28 @@ public class ApplicationService {
                 .map(Offer::getTitle)
                 .orElse("Offre supprimée");
 
+        return toDTO(app, offerTitle);
+    }
+
+    @Transactional
+    public ApplicationDTO completeApplication(Long freelancerId, Long applicationId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature introuvable"));
+
+        if (!app.getFreelancerId().equals(freelancerId)) {
+            throw new ForbiddenException("Accès refusé");
+        }
+
+        if (app.getStatus() != ApplicationStatus.ACCEPTED) {
+            throw new ConflictException("Seules les missions acceptées peuvent être marquées comme terminées");
+        }
+
+        app.setStatus(ApplicationStatus.COMPLETED);
+        app.setCompletedAt(java.time.LocalDateTime.now());
+        applicationRepository.save(app);
+
+        String offerTitle = offerRepository.findById(app.getOfferId())
+                .map(Offer::getTitle).orElse("Offre supprimée");
         return toDTO(app, offerTitle);
     }
 
@@ -125,6 +148,7 @@ public class ApplicationService {
                 .proposedDays(a.getProposedDays())
                 .status(a.getStatus().name())
                 .createdAt(a.getCreatedAt())
+                .completedAt(a.getCompletedAt())
                 .offerTitle(offerTitle)
                 .build();
     }

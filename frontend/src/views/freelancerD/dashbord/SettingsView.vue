@@ -7,9 +7,23 @@
       <p class="text-[13px] text-[#73726C] mt-0.5">Gérez votre compte et vos préférences</p>
     </div>
 
-    <!-- LOADING -->
-    <div v-if="loading" class="flex justify-center py-16">
-      <div class="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+    <!-- LOADING SKELETON -->
+    <div v-if="loading" class="space-y-4">
+      <div class="bg-white rounded-xl border border-[#EBEBE5] overflow-hidden animate-pulse">
+        <div class="px-6 py-4 border-b border-[#EBEBE5]"><div class="h-4 w-40 bg-[#EBEBE5] rounded"></div></div>
+        <div class="p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="h-9 bg-[#F4F4ED] rounded-lg"></div>
+            <div class="h-9 bg-[#F4F4ED] rounded-lg"></div>
+          </div>
+          <div class="h-9 bg-[#F4F4ED] rounded-lg"></div>
+          <div class="h-9 bg-[#F4F4ED] rounded-lg max-w-xs"></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-[#EBEBE5] overflow-hidden animate-pulse">
+        <div class="px-6 py-4 border-b border-[#EBEBE5]"><div class="h-4 w-20 bg-[#EBEBE5] rounded"></div></div>
+        <div class="p-6"><div class="h-10 bg-[#F4F4ED] rounded-lg"></div></div>
+      </div>
     </div>
 
     <div v-else class="space-y-4">
@@ -23,13 +37,13 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">Prénom</label>
+              <label class="block text-xs text-[#9C9A92] mb-1.5">Prénom</label>
               <div class="px-3 py-2.5 bg-[#FAFAF7] border border-[#EBEBE5] rounded-lg text-[13px] text-ink">
                 {{ form.firstName || '—' }}
               </div>
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">Nom</label>
+              <label class="block text-xs text-[#9C9A92] mb-1.5">Nom</label>
               <div class="px-3 py-2.5 bg-[#FAFAF7] border border-[#EBEBE5] rounded-lg text-[13px] text-ink">
                 {{ form.lastName || '—' }}
               </div>
@@ -37,7 +51,7 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">Email</label>
+            <label class="block text-xs text-[#9C9A92] mb-1.5">Email</label>
             <div class="flex items-center gap-2">
               <div class="flex-1 px-3 py-2.5 bg-[#FAFAF7] border border-[#EBEBE5] rounded-lg text-[13px] text-ink">
                 {{ form.email }}
@@ -49,7 +63,7 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">Téléphone</label>
+            <label class="block text-xs text-[#9C9A92] mb-1.5">Téléphone</label>
             <input
                 v-model="form.phone"
                 type="tel"
@@ -60,21 +74,21 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">Langue</label>
+              <label class="block text-xs text-[#9C9A92] mb-1.5">Langue</label>
               <select v-model="form.language"
                       class="w-full text-[13px] bg-white border border-[#EBEBE5] rounded-lg px-3 py-2.5 outline-none focus:border-brand-500 transition">
-                <option value="fr">🇫🇷 Français</option>
-                <option value="en">🇬🇧 English</option>
-                <option value="ar">🇲🇦 العربية</option>
+                <option value="fr">Français</option>
+                <option value="en">English</option>
+                <option value="ar">العربية</option>
               </select>
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">Devise</label>
+              <label class="block text-xs text-[#9C9A92] mb-1.5">Devise</label>
               <select v-model="form.currency"
                       class="w-full text-[13px] bg-white border border-[#EBEBE5] rounded-lg px-3 py-2.5 outline-none focus:border-brand-500 transition">
-                <option value="MAD">🇲🇦 DH (MAD)</option>
-                <option value="EUR">🇪🇺 € (EUR)</option>
-                <option value="USD">🇺🇸 $ (USD)</option>
+                <option value="MAD">DH (MAD)</option>
+                <option value="EUR">€ (EUR)</option>
+                <option value="USD">$ (USD)</option>
               </select>
             </div>
           </div>
@@ -199,7 +213,7 @@
                 Toutes vos données seront supprimées définitivement. Action irréversible.
               </div>
               <p v-if="confirmDelete" class="text-[12px] text-red-600 font-medium mt-2">
-                ⚠️ Cliquez encore une fois pour confirmer.
+                Cliquez encore une fois pour confirmer.
               </p>
             </div>
             <button @click="handleDelete" :disabled="deletingAccount"
@@ -220,18 +234,21 @@
 
     </div>
 
-    <!-- ===== TOAST SUCCÈS ===== -->
-    <div v-if="toast.show"
-         class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl text-[13px] font-medium flex items-center gap-2 transition-all"
-         :class="toast.type === 'success' ? 'bg-ink text-white' : 'bg-red-600 text-white'">
-      <svg v-if="toast.type === 'success'" class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-      </svg>
-      <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-      {{ toast.message }}
-    </div>
+    <!-- ===== TOAST ===== -->
+    <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 translate-y-2"
+                leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-2">
+      <div v-if="toast.show"
+           class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg border text-[13px] font-medium flex items-center gap-2"
+           :class="toast.type === 'success' ? 'bg-ink text-white border-transparent' : 'bg-white text-red-600 border-red-200'">
+        <svg v-if="toast.type === 'success'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+        </svg>
+        <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        {{ toast.message }}
+      </div>
+    </Transition>
 
     <!-- ===== MODAL MOT DE PASSE ===== -->
     <div v-if="showPasswordModal"
@@ -258,7 +275,7 @@
 
           <!-- currentPassword -->
           <div>
-            <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">
+            <label class="block text-xs text-[#9C9A92] mb-1.5">
               Mot de passe actuel
             </label>
             <div class="relative">
@@ -277,7 +294,7 @@
 
           <!-- newPassword -->
           <div>
-            <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">
+            <label class="block text-xs text-[#9C9A92] mb-1.5">
               Nouveau mot de passe
             </label>
             <div class="relative">
@@ -296,7 +313,7 @@
 
           <!-- confirm -->
           <div>
-            <label class="block text-[11px] font-semibold text-[#9C9A92] uppercase tracking-wider mb-1.5">
+            <label class="block text-xs text-[#9C9A92] mb-1.5">
               Confirmer
             </label>
             <input v-model="pwdForm.confirm"

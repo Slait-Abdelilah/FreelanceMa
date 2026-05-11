@@ -31,6 +31,8 @@ import ComingSoonView from '@/views/freelancerD/dashbord/ComingSoonView.vue'
 import WalletView from '@/views/freelancerD/dashbord/WalletView.vue'
 import ExploreMissionsView from '@/views/freelancerD/dashbord/ExploreMissionsView.vue'
 import ApplicationsView from '@/views/freelancerD/dashbord/ApplicationsView.vue'
+import ActiveMissionsView from '@/views/freelancerD/dashbord/ActiveMissionsView.vue'
+import FavoritesView from '@/views/freelancerD/dashbord/FavoritesView.vue'
 
 
 
@@ -110,8 +112,8 @@ const routes = [
             { path: 'portfolio', component: PortfolioView },
             { path: 'explore', component: ExploreMissionsView },
             { path: 'applications', component: ApplicationsView },
-            { path: 'active-missions', component: ComingSoonView },
-            { path: 'favorites', component: ComingSoonView },
+            { path: 'active-missions', component: ActiveMissionsView },
+            { path: 'favorites', component: FavoritesView },
             { path: 'messages', component: ComingSoonView },
             { path: 'notifications', component: ComingSoonView },
             { path: 'wallet', component: WalletView },

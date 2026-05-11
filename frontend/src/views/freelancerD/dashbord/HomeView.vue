@@ -140,48 +140,6 @@
       <!-- colonne droite -->
       <div class="space-y-4">
 
-        <!-- profil -->
-        <div class="bg-white border border-[#EBEBE5] rounded-xl overflow-hidden">
-          <div class="px-5 py-4 border-b border-[#EBEBE5]">
-            <p class="text-sm font-semibold text-ink">Profil</p>
-          </div>
-          <div class="p-5">
-
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-xs text-[#73726C]">Complétude</p>
-              <p class="text-xs font-bold text-ink">{{ profileCompletion }}%</p>
-            </div>
-            <div class="w-full h-1.5 bg-[#F4F4ED] rounded-full mb-4">
-              <div class="h-full rounded-full bg-brand-500 transition-all duration-700"
-                   :style="{ width: profileCompletion + '%' }"></div>
-            </div>
-
-            <div class="space-y-2.5">
-              <div v-for="item in profileChecklist" :key="item.label"
-                   class="flex items-center gap-2.5">
-                <svg v-if="item.done" class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                <svg v-else class="w-3.5 h-3.5 text-[#D1D1CB] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clip-rule="evenodd"/>
-                </svg>
-                <span class="text-xs" :class="item.done ? 'text-[#9C9A92] line-through' : 'text-[#5F5E5A]'">
-                  {{ item.label }}
-                </span>
-              </div>
-            </div>
-
-            <RouterLink v-if="profileCompletion < 100" to="/freelancer/profile"
-                        class="mt-4 flex items-center justify-between w-full text-xs font-medium text-ink hover:text-brand-600 transition pt-4 border-t border-[#EBEBE5]">
-              <span>Compléter mon profil</span>
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
-            </RouterLink>
-
-          </div>
-        </div>
-
         <!-- stats rapides -->
         <div class="bg-white border border-[#EBEBE5] rounded-xl overflow-hidden">
           <div class="px-5 py-4 border-b border-[#EBEBE5]">
@@ -376,21 +334,6 @@ const recentApplications = computed(() =>
 const pendingCount = computed(() =>
   applications.value.filter(a => a.status === 'PENDING').length
 )
-
-// ── Profil complétude ────────────────────────
-const profileChecklist = computed(() => [
-  { label: 'Email vérifié',         done: !!profile.value.email },
-  { label: 'Titre professionnel',   done: !!profile.value.title },
-  { label: 'Bio',                   done: !!profile.value.bio },
-  { label: 'Compétences',          done: !!profile.value.skills },
-  { label: 'Tarif horaire',         done: !!profile.value.hourlyRate },
-  { label: 'Localisation',         done: !!profile.value.location },
-])
-
-const profileCompletion = computed(() => {
-  const done = profileChecklist.value.filter(i => i.done).length
-  return Math.round((done / profileChecklist.value.length) * 100)
-})
 
 // ── Helpers ─────────────────────────────────
 const formatAmount = (val) =>
