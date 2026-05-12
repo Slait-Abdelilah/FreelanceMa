@@ -1,7 +1,12 @@
 package org.example.userservice.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.userservice.dto.*;
+import org.example.userservice.dto.DepositRequest;
+import org.example.userservice.dto.EscrowRequest;
+import org.example.userservice.dto.TransactionDTO;
+import org.example.userservice.dto.WalletDTO;
+import org.example.userservice.dto.WalletSummaryDTO;
+import org.example.userservice.dto.WithdrawalRequest;
 import org.example.userservice.entity.Transaction;
 import org.example.userservice.entity.Wallet;
 import org.example.userservice.enums.TransactionStatus;
@@ -39,6 +44,68 @@ public class WalletService {
         Wallet wallet = getOrCreateWallet(userId);
         return transactionRepository.findByWalletIdOrderByCreatedAtDesc(wallet.getId())
                 .stream().map(this::toTransactionDTO).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public TransactionDTO deposit(Long userId, DepositRequest request) {
+        if (request.getAmount().compareTo(new BigDecimal("50")) < 0) {
+            throw new AppException("Montant minimum de recharge : 50 DH", HttpStatus.BAD_REQUEST);
+        }
+
+        Wallet wallet = getOrCreateWallet(userId);
+        wallet.setBalance(wallet.getBalance().add(request.getAmount()));
+        walletRepository.save(wallet);
+
+        Transaction tx = Transaction.builder()
+                .walletId(wallet.getId())
+                .amount(request.getAmount())
+                .type(TransactionType.DEPOSIT)
+                .status(TransactionStatus.COMPLETED)
+                .description("Recharge du solde : +" + request.getAmount() + " DH")
+                .build();
+
+        return toTransactionDTO(transactionRepository.save(tx));
+    }
+
+    @Transactional
+    public TransactionDTO escrowHold(EscrowRequest request) {
+        Wallet wallet = getOrCreateWallet(request.getUserId());
+
+        wallet.setPendingBalance(wallet.getPendingBalance().add(request.getAmount()));
+        walletRepository.save(wallet);
+
+        Transaction tx = Transaction.builder()
+                .walletId(wallet.getId())
+                .amount(request.getAmount())
+                .type(TransactionType.ESCROW_HOLD)
+                .status(TransactionStatus.COMPLETED)
+                .description(request.getDescription())
+                .missionId(request.getMissionId())
+                .build();
+
+        return toTransactionDTO(transactionRepository.save(tx));
+    }
+
+    @Transactional
+    public TransactionDTO escrowRelease(EscrowRequest request) {
+        Wallet wallet = getOrCreateWallet(request.getUserId());
+
+        BigDecimal release = request.getAmount().min(wallet.getPendingBalance());
+        wallet.setPendingBalance(wallet.getPendingBalance().subtract(release));
+        wallet.setBalance(wallet.getBalance().add(release));
+        wallet.setTotalEarned(wallet.getTotalEarned().add(release));
+        walletRepository.save(wallet);
+
+        Transaction tx = Transaction.builder()
+                .walletId(wallet.getId())
+                .amount(release)
+                .type(TransactionType.ESCROW_RELEASE)
+                .status(TransactionStatus.COMPLETED)
+                .description(request.getDescription())
+                .missionId(request.getMissionId())
+                .build();
+
+        return toTransactionDTO(transactionRepository.save(tx));
     }
 
     @Transactional

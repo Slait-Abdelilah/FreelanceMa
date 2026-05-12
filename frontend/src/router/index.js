@@ -27,6 +27,7 @@ import ClientApplicationsView from '@/views/clientsD/dashbord/ClientApplications
 import ClientMissionsView from '@/views/clientsD/dashbord/ClientMissionsView.vue'
 import ClientSettingsView from '@/views/clientsD/dashbord/ClientSettingsView.vue'
 import ClientFreelancersView from '@/views/clientsD/dashbord/ClientFreelancersView.vue'
+import ClientWalletView from '@/views/clientsD/dashbord/ClientWalletView.vue'
 // ===== FREELANCER DASHBOARD =====
 import FreelancerDashboardLayout from '@/views/freelancerD/dashbord/FreelancerDashboardLayout.vue'
 import FreelancerHomeView from '@/views/freelancerD/dashbord/HomeView.vue'
@@ -112,6 +113,7 @@ const routes = [
             { path: 'applications', component: ClientApplicationsView },
             { path: 'missions', component: ClientMissionsView },
             { path: 'freelancers', component: ClientFreelancersView },
+            { path: 'wallet', component: ClientWalletView },
             { path: 'settings', component: ClientSettingsView },
         ]
     },

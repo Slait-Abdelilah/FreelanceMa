@@ -2,11 +2,16 @@ package org.example.userservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.userservice.dto.*;
+import org.example.userservice.dto.DepositRequest;
+import org.example.userservice.dto.TransactionDTO;
+import org.example.userservice.dto.WalletSummaryDTO;
+import org.example.userservice.dto.WithdrawalRequest;
 import org.example.userservice.service.WalletService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import java.util.List;
 
@@ -25,6 +30,12 @@ public class WalletController {
     @GetMapping("/transactions")
     public ResponseEntity<List<TransactionDTO>> getAllTransactions(Authentication auth) {
         return ResponseEntity.ok(walletService.getAllTransactions(getUserId(auth)));
+    }
+
+    @PostMapping("/deposit")
+    public ResponseEntity<TransactionDTO> deposit(Authentication auth,
+                                                   @Valid @RequestBody DepositRequest request) {
+        return ResponseEntity.ok(walletService.deposit(getUserId(auth), request));
     }
 
     @PostMapping("/withdraw")
