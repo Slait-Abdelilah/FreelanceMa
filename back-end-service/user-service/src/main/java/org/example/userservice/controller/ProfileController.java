@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor
@@ -24,6 +26,12 @@ public class ProfileController {
     public ResponseEntity<ProfileDTO> updateProfile(Authentication auth,
                                                      @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(profileService.updateProfile(auth.getName(), userId(auth), role(auth), request));
+    }
+
+    @GetMapping("/freelancers")
+    public ResponseEntity<List<ProfileDTO>> getFreelancers(
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(profileService.getAllFreelancers(search));
     }
 
     @GetMapping("/{userId}/public")

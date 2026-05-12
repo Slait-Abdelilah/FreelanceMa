@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
@@ -39,6 +41,13 @@ public class ProfileService {
         if (req.getExperienceLevel() != null) profile.setExperienceLevel(req.getExperienceLevel());
 
         return toDTO(userProfileRepository.save(profile));
+    }
+
+    public List<ProfileDTO> getAllFreelancers(String search) {
+        List<UserProfile> profiles = (search != null && !search.isBlank())
+                ? userProfileRepository.searchFreelancers(search.trim())
+                : userProfileRepository.findAllByRole("FREELANCER");
+        return profiles.stream().map(this::toDTO).toList();
     }
 
     public ProfileDTO getPublicProfile(Long userId) {
