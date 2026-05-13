@@ -270,7 +270,12 @@ const headers = () => ({ Authorization: `Bearer ${token()}` })
 const load = async () => {
   loading.value = true
   try {
-    const { data: offers } = await axios.get(`${API_URL}/api/offers/my`, { headers: headers() })
+    const [{ data: offers }, { data: reviewed }] = await Promise.all([
+      axios.get(`${API_URL}/api/offers/my`, { headers: headers() }),
+      axios.get(`${API_URL}/api/reviews/my`, { headers: headers() }),
+    ])
+    myReviews.value = new Set(reviewed)
+
     const results = await Promise.allSettled(
       offers.map(o =>
         axios.get(`${API_URL}/api/offers/${o.id}/applications`, { headers: headers() })
@@ -288,7 +293,6 @@ const load = async () => {
       .filter(a => ['ACCEPTED', 'AWAITING_VALIDATION', 'COMPLETED'].includes(a.status))
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-    // Auto-switch to awaiting tab if there are missions to validate
     if (missions.value.some(m => m.status === 'AWAITING_VALIDATION')) {
       activeTab.value = 'awaiting'
     }

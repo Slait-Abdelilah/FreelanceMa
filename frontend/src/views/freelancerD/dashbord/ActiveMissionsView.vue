@@ -311,8 +311,12 @@ const hasReview = (applicationId) => myReviews.value.has(applicationId)
 const loadMissions = async () => {
   loading.value = true
   try {
-    const { data } = await axios.get(`${API_URL}/api/applications/my`, headers())
+    const [{ data }, { data: reviewed }] = await Promise.all([
+      axios.get(`${API_URL}/api/applications/my`, headers()),
+      axios.get(`${API_URL}/api/reviews/my`, headers()),
+    ])
     applications.value = data || []
+    myReviews.value = new Set(reviewed)
   } catch {
     showToast('Impossible de charger les missions', 'error')
   } finally {

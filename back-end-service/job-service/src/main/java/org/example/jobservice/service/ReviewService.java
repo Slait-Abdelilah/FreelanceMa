@@ -102,6 +102,10 @@ public class ReviewService {
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    public List<Long> getMyReviewedApplicationIds(Long reviewerId) {
+        return reviewRepository.findApplicationIdsByReviewerId(reviewerId);
+    }
+
     private void updateUserRating(Long userId) {
         List<Review> reviews = reviewRepository.findByReviewedIdOrderByCreatedAtDesc(userId);
         if (reviews.isEmpty()) return;

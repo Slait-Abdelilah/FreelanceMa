@@ -27,6 +27,12 @@ public class ReviewController {
         return ResponseEntity.status(201).body(reviewService.submitReview(reviewerId, role, request));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<Long>> getMyReviewedApplicationIds(Authentication auth) {
+        Long userId = (Long) auth.getDetails();
+        return ResponseEntity.ok(reviewService.getMyReviewedApplicationIds(userId));
+    }
+
     @GetMapping("/freelancer/{id}")
     public ResponseEntity<List<ReviewDTO>> getFreelancerReviews(@PathVariable Long id) {
         return ResponseEntity.ok(reviewService.getFreelancerReviews(id));
