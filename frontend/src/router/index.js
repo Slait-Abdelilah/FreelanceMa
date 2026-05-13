@@ -151,11 +151,16 @@ router.beforeEach((to, from) => {
     const token = localStorage.getItem('token')
     const user = getUser()
 
-    // Si le token est expiré → déconnexion silencieuse immédiate
+    // Si le token est expiré
     if (token && isTokenExpired(token)) {
+        const refreshToken = localStorage.getItem('refreshToken')
+        if (refreshToken) {
+            // Refresh token présent → laisser passer, l'intercepteur Axios renouvellera silencieusement
+            return true
+        }
+        // Aucun refresh token → déconnexion immédiate
         localStorage.removeItem('token')
         localStorage.removeItem('user')
-        localStorage.removeItem('refreshToken')
         if (to.meta.requiresAuth) {
             return user.role === 'CLIENT' ? '/login/client' : '/login/freelancer'
         }

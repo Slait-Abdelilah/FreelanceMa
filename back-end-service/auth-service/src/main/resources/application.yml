@@ -42,8 +42,8 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    # Access token : recommandé 900000 (15 min) avec refresh token activé
-    expiration: ${JWT_EXPIRATION:900000}
+    # Access token : 4 heures (le refresh token renouvelle silencieusement)
+    expiration: ${JWT_EXPIRATION:14400000}
     # Refresh token : 30 jours
     refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}
   security:
