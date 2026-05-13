@@ -95,8 +95,8 @@
                   class="text-[12px] bg-[#F4F4ED] border-0 rounded-lg px-3 py-1.5 outline-none text-[#5F5E5A] cursor-pointer">
             <option value="ALL">Toutes</option>
             <option value="DEPOSIT">Recharges</option>
-            <option value="ESCROW_HOLD">Missions financées</option>
-            <option value="ESCROW_RELEASE">Remboursements</option>
+            <option value="ESCROW_HOLD">Missions bloquées</option>
+            <option value="ESCROW_RELEASE">Paiements effectués</option>
           </select>
         </div>
 
@@ -136,8 +136,8 @@
 
             <div class="text-right flex-shrink-0">
               <div class="text-[14px] font-bold tabular-nums"
-                   :class="isCredit(tx.type) ? 'text-green-600' : 'text-ink'">
-                {{ isCredit(tx.type) ? '+' : '−' }}{{ formatAmount(Math.abs(tx.amount)) }}
+                   :class="parseFloat(tx.amount) >= 0 ? 'text-green-600' : 'text-ink'">
+                {{ parseFloat(tx.amount) >= 0 ? '+' : '−' }}{{ formatAmount(Math.abs(parseFloat(tx.amount))) }}
                 <span class="text-[11px] font-normal text-[#9C9A92]">DH</span>
               </div>
               <div class="text-[11px] mt-0.5" :class="statusClass(tx.status)">
@@ -389,25 +389,23 @@ const filteredTransactions = computed(() => {
   return transactions.value.filter(t => t.type === selectedFilter.value)
 })
 
+// Total réellement payé aux freelancers (ESCROW_RELEASE côté client = paiement sorti)
 const totalSpent = computed(() => {
   return transactions.value
-    .filter(t => t.type === 'ESCROW_HOLD')
+    .filter(t => t.type === 'ESCROW_RELEASE')
     .reduce((sum, t) => sum + Math.abs(parseFloat(t.amount) || 0), 0)
 })
 
 const completedMissionsCount = computed(() =>
-  transactions.value.filter(t => t.type === 'ESCROW_HOLD').length
+  transactions.value.filter(t => t.type === 'ESCROW_RELEASE').length
 )
 
 // ── HELPERS ─────────────────────────────────────────────────────────────────
 
-const isCredit = (type) => ['DEPOSIT', 'ESCROW_RELEASE', 'ESCROW_REFUND'].includes(type)
-
 const txLabel = (type) => ({
   DEPOSIT:        'Recharge du solde',
-  ESCROW_HOLD:    'Mission financée',
-  ESCROW_RELEASE: 'Remboursement reçu',
-  ESCROW_REFUND:  'Remboursement',
+  ESCROW_HOLD:    'Mission bloquée en escrow',
+  ESCROW_RELEASE: 'Paiement effectué au freelancer',
   WITHDRAWAL:     'Retrait',
 }[type] || type)
 

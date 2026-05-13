@@ -149,10 +149,11 @@
 
     <!-- TOAST -->
     <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 translate-y-2"
-                leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-2">
-      <div v-if="toast"
-           class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-ink text-white text-[13px] font-medium px-4 py-2.5 rounded-xl shadow-lg z-50">
-        {{ toast }}
+                leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-2" name="toast">
+      <div v-if="toast.message"
+           class="fixed bottom-5 left-1/2 -translate-x-1/2 text-[13px] font-medium px-4 py-2.5 rounded-xl shadow-lg z-50"
+           :class="toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-ink text-white'">
+        {{ toast.message }}
       </div>
     </Transition>
 
@@ -172,15 +173,16 @@ const selectedOffer = ref(null)
 const loadingOffers = ref(true)
 const loadingApps   = ref(false)
 const actionId      = ref(null)
-const toast         = ref('')
+const toast         = ref({ message: '', type: 'success' })
 const appTab        = ref('all')
 const expanded      = ref(new Set())
 
 const appTabs = [
-  { value: 'all',      label: 'Toutes'     },
-  { value: 'PENDING',  label: 'En attente' },
-  { value: 'ACCEPTED', label: 'Acceptées'  },
-  { value: 'REJECTED', label: 'Refusées'   },
+  { value: 'all',                 label: 'Toutes'     },
+  { value: 'PENDING',             label: 'En attente' },
+  { value: 'ACCEPTED',            label: 'Acceptées'  },
+  { value: 'AWAITING_VALIDATION', label: 'À valider'  },
+  { value: 'REJECTED',            label: 'Refusées'   },
 ]
 
 const pendingCount   = computed(() => applications.value.filter(a => a.status === 'PENDING').length)
@@ -229,7 +231,7 @@ const doAccept = async (app) => {
     const idx = applications.value.findIndex(a => a.id === data.id)
     if (idx !== -1) applications.value[idx] = data
     showToast('Candidature acceptée')
-  } catch (e) { showToast(e.response?.data?.message || 'Erreur')
+  } catch (e) { showToast(e.response?.data?.message || 'Erreur', 'error')
   } finally { actionId.value = null }
 }
 
@@ -240,16 +242,17 @@ const doReject = async (app) => {
     const idx = applications.value.findIndex(a => a.id === data.id)
     if (idx !== -1) applications.value[idx] = data
     showToast('Candidature refusée')
-  } catch (e) { showToast(e.response?.data?.message || 'Erreur')
+  } catch (e) { showToast(e.response?.data?.message || 'Erreur', 'error')
   } finally { actionId.value = null }
 }
 
 const statusStyle = (s) => ({
-  PENDING:   { label: 'En attente', pill: 'bg-amber-50 text-amber-600 border-amber-100' },
-  ACCEPTED:  { label: 'Acceptée',   pill: 'bg-green-50 text-green-600 border-green-100' },
-  REJECTED:  { label: 'Refusée',    pill: 'bg-red-50 text-red-400 border-red-100'       },
-  WITHDRAWN: { label: 'Retirée',    pill: 'bg-[#F4F4ED] text-[#9C9A92] border-[#EBEBE5]' },
-  COMPLETED: { label: 'Terminée',   pill: 'bg-[#F4F4ED] text-[#5F5E5A] border-[#EBEBE5]' },
+  PENDING:              { label: 'En attente',    pill: 'bg-amber-50 text-amber-600 border-amber-100'   },
+  ACCEPTED:             { label: 'Acceptée',      pill: 'bg-green-50 text-green-600 border-green-100'   },
+  REJECTED:             { label: 'Refusée',       pill: 'bg-red-50 text-red-400 border-red-100'         },
+  WITHDRAWN:            { label: 'Retirée',       pill: 'bg-[#F4F4ED] text-[#9C9A92] border-[#EBEBE5]' },
+  AWAITING_VALIDATION:  { label: 'À valider',     pill: 'bg-amber-50 text-amber-700 border-amber-200'   },
+  COMPLETED:            { label: 'Terminée',      pill: 'bg-[#F4F4ED] text-[#5F5E5A] border-[#EBEBE5]' },
 }[s] || { label: s, pill: 'bg-[#F4F4ED] text-[#9C9A92] border-[#EBEBE5]' })
 
 const timeAgo = (iso) => {
@@ -263,10 +266,10 @@ const timeAgo = (iso) => {
 }
 
 let toastTimer = null
-const showToast = (msg) => {
-  toast.value = msg
+const showToast = (msg, type = 'success') => {
+  toast.value = { message: msg, type }
   clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { toast.value = '' }, 3000)
+  toastTimer = setTimeout(() => { toast.value = { message: '', type: 'success' } }, 3000)
 }
 
 onMounted(loadOffers)

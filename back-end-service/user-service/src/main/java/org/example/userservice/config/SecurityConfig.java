@@ -58,6 +58,7 @@ public class SecurityConfig {
                                 .includeSubDomains(true)
                                 .maxAgeInSeconds(31536000)))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/internal/**").permitAll()
                         .requestMatchers("/api/profile/*/public").permitAll()
                         .requestMatchers("/api/portfolio/public/**").permitAll()
                         .anyRequest().authenticated()
