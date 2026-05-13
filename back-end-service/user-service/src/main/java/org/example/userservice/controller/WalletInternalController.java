@@ -33,4 +33,9 @@ public class WalletInternalController {
     public ResponseEntity<TransactionDTO> clientRelease(@RequestBody EscrowRequest request) {
         return ResponseEntity.ok(walletService.clientEscrowRelease(request));
     }
+
+    @PostMapping("/direct-credit")
+    public ResponseEntity<TransactionDTO> directCredit(@RequestBody EscrowRequest request) {
+        return ResponseEntity.ok(walletService.directCredit(request));
+    }
 }

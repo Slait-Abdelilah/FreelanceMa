@@ -108,6 +108,26 @@ public class WalletService {
         return toTransactionDTO(transactionRepository.save(tx));
     }
 
+    // Direct credit to freelancer balance (no escrow hold needed)
+    @Transactional
+    public TransactionDTO directCredit(EscrowRequest request) {
+        Wallet wallet = getOrCreateWallet(request.getUserId());
+        wallet.setBalance(wallet.getBalance().add(request.getAmount()));
+        wallet.setTotalEarned(wallet.getTotalEarned().add(request.getAmount()));
+        walletRepository.save(wallet);
+
+        Transaction tx = Transaction.builder()
+                .walletId(wallet.getId())
+                .amount(request.getAmount())
+                .type(TransactionType.ESCROW_RELEASE)
+                .status(TransactionStatus.COMPLETED)
+                .description(request.getDescription())
+                .missionId(request.getMissionId())
+                .build();
+
+        return toTransactionDTO(transactionRepository.save(tx));
+    }
+
     // Client side: block funds when accepting an application
     @Transactional
     public TransactionDTO clientEscrowHold(EscrowRequest request) {

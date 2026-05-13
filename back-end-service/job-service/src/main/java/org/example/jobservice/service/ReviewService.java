@@ -43,23 +43,20 @@ public class ReviewService {
             throw new ConflictException("Vous ne pouvez noter qu'une mission terminée");
         }
 
-        // Determine who is being reviewed
+        Offer offer = offerRepository.findById(app.getOfferId())
+                .orElseThrow(() -> new ResourceNotFoundException("Offre introuvable"));
+
+        // Determine who is being reviewed, validate access
         Long reviewedId;
         if ("CLIENT".equals(reviewerRole)) {
-            // Only the client of this offer can review the freelancer
-            Offer offer = offerRepository.findById(app.getOfferId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Offre introuvable"));
             if (!offer.getClientId().equals(reviewerId)) {
                 throw new ForbiddenException("Accès refusé");
             }
             reviewedId = app.getFreelancerId();
         } else {
-            // Freelancer reviews the client
             if (!app.getFreelancerId().equals(reviewerId)) {
                 throw new ForbiddenException("Accès refusé");
             }
-            Offer offer = offerRepository.findById(app.getOfferId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Offre introuvable"));
             reviewedId = offer.getClientId();
         }
 
@@ -82,13 +79,11 @@ public class ReviewService {
         updateUserRating(reviewedId);
 
         // Notify the reviewed user
-        Offer offer = offerRepository.findById(app.getOfferId()).orElse(null);
         notificationService.create(
                 reviewedId,
                 NotificationType.REVIEW_RECEIVED,
                 "Nouvel avis reçu",
-                "Vous avez reçu un avis " + request.getRating() + "/5 pour la mission"
-                        + (offer != null ? " « " + offer.getTitle() + " »" : "") + ".",
+                "Vous avez reçu un avis " + request.getRating() + "/5 pour la mission « " + offer.getTitle() + " ».",
                 app.getOfferId(), app.getId()
         );
 

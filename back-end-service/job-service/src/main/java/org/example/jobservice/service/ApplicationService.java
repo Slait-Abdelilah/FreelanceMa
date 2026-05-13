@@ -177,29 +177,23 @@ public class ApplicationService {
         app.setStatus(ApplicationStatus.COMPLETED);
         applicationRepository.save(app);
 
-        // Release escrow: move funds from client pendingBalance + pay freelancer
+        // Release client escrow + credit freelancer directly
         if (app.getProposedBudget() != null) {
             try {
                 walletClient.clientEscrowRelease(new EscrowRequest(
                         clientId,
                         app.getProposedBudget(),
                         app.getId(),
-                        "Paiement validé pour « " + offer.getTitle() + " »"
+                        "Mission validée — paiement libéré pour « " + offer.getTitle() + " »"
                 ));
-                walletClient.freelancerEscrowHold(new EscrowRequest(
+                walletClient.freelancerDirectCredit(new EscrowRequest(
                         app.getFreelancerId(),
                         app.getProposedBudget(),
                         app.getId(),
                         "Paiement reçu pour « " + offer.getTitle() + " »"
                 ));
-                walletClient.freelancerEscrowRelease(new EscrowRequest(
-                        app.getFreelancerId(),
-                        app.getProposedBudget(),
-                        app.getId(),
-                        "Fonds disponibles pour « " + offer.getTitle() + " »"
-                ));
             } catch (Exception e) {
-                log.warn("Wallet escrow release failed for application {}: {}", applicationId, e.getMessage());
+                log.warn("Wallet payment failed for application {}: {}", applicationId, e.getMessage());
             }
         }
 
@@ -285,7 +279,7 @@ public class ApplicationService {
         if (app.getStatus() != ApplicationStatus.PENDING)
             throw new ConflictException("Seules les candidatures en attente peuvent être acceptées");
 
-        // Hold client funds in escrow if proposed budget exists
+        // Block client funds in escrow — propagates if insufficient balance
         if (app.getProposedBudget() != null) {
             try {
                 walletClient.clientEscrowHold(new EscrowRequest(
@@ -294,8 +288,10 @@ public class ApplicationService {
                         app.getId(),
                         "Fonds bloqués pour « " + offer.getTitle() + " »"
                 ));
+            } catch (feign.FeignException.BadRequest e) {
+                throw new ConflictException("Solde insuffisant pour accepter cette candidature. Rechargez votre wallet.");
             } catch (Exception e) {
-                log.warn("Client escrow hold failed for application {}: {}", applicationId, e.getMessage());
+                log.warn("Client escrow hold failed for application {} (service unavailable): {}", applicationId, e.getMessage());
             }
         }
 
