@@ -24,6 +24,10 @@ spring:
 auth-service:
   url: http://localhost:8081
 
+# URL de user-service pour les appels Feign wallet/profile
+user-service:
+  url: http://localhost:8082
+
 # JWT (meme secret que auth-service !)
 app:
   jwt:

@@ -65,4 +65,16 @@ public class ApplicationController {
         Long clientId = (Long) auth.getDetails();
         return ResponseEntity.ok(applicationService.rejectApplication(clientId, id));
     }
+
+    @PutMapping("/{id}/validate")
+    public ResponseEntity<ApplicationDTO> validate(Authentication auth, @PathVariable Long id) {
+        Long clientId = (Long) auth.getDetails();
+        return ResponseEntity.ok(applicationService.validateMission(clientId, id));
+    }
+
+    @GetMapping("/offer/{offerId}")
+    public ResponseEntity<List<ApplicationDTO>> getForOffer(Authentication auth, @PathVariable Long offerId) {
+        Long clientId = (Long) auth.getDetails();
+        return ResponseEntity.ok(applicationService.getApplicationsForOffer(clientId, offerId));
+    }
 }

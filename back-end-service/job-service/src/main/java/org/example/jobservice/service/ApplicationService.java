@@ -1,8 +1,12 @@
 package org.example.jobservice.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.example.jobservice.client.ProfileClient;
+import org.example.jobservice.client.WalletClient;
 import org.example.jobservice.dto.ApplicationDTO;
 import org.example.jobservice.dto.CreateApplicationRequest;
+import org.example.jobservice.dto.EscrowRequest;
 import org.example.jobservice.entity.Application;
 import org.example.jobservice.entity.Offer;
 import org.example.jobservice.enums.ApplicationStatus;
@@ -19,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ApplicationService {
@@ -26,6 +31,8 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final OfferRepository offerRepository;
     private final NotificationService notificationService;
+    private final WalletClient walletClient;
+    private final ProfileClient profileClient;
 
     @Transactional
     public ApplicationDTO apply(Long freelancerId, CreateApplicationRequest request) {
@@ -106,6 +113,7 @@ public class ApplicationService {
         return toDTO(app, offerTitle);
     }
 
+    // Freelancer marks work as done → goes to AWAITING_VALIDATION (client must validate)
     @Transactional
     public ApplicationDTO completeApplication(Long freelancerId, Long applicationId) {
         Application app = applicationRepository.findById(applicationId)
@@ -119,22 +127,108 @@ public class ApplicationService {
             throw new ConflictException("Seules les missions acceptées peuvent être marquées comme terminées");
         }
 
-        app.setStatus(ApplicationStatus.COMPLETED);
+        app.setStatus(ApplicationStatus.AWAITING_VALIDATION);
         app.setCompletedAt(java.time.LocalDateTime.now());
         applicationRepository.save(app);
 
-        String offerTitle = offerRepository.findById(app.getOfferId())
-                .map(Offer::getTitle).orElse("Offre supprimée");
+        Offer offer = offerRepository.findById(app.getOfferId()).orElse(null);
+        String offerTitle = offer != null ? offer.getTitle() : "Offre supprimée";
 
+        // Notify freelancer
         notificationService.create(
                 freelancerId,
-                NotificationType.MISSION_COMPLETED,
-                "Mission terminée",
-                "La mission « " + offerTitle + " » a été marquée comme terminée. Félicitations !",
+                NotificationType.AWAITING_VALIDATION,
+                "En attente de validation",
+                "Vous avez marqué la mission « " + offerTitle + " » comme terminée. En attente de validation par le client.",
                 app.getOfferId(), applicationId
         );
 
+        // Notify client
+        if (offer != null) {
+            notificationService.create(
+                    offer.getClientId(),
+                    NotificationType.AWAITING_VALIDATION,
+                    "Mission à valider",
+                    "Le freelancer a terminé la mission « " + offerTitle + " ». Veuillez valider le travail.",
+                    offer.getId(), applicationId
+            );
+        }
+
         return toDTO(app, offerTitle);
+    }
+
+    // Client validates the mission → COMPLETED + escrow released to freelancer
+    @Transactional
+    public ApplicationDTO validateMission(Long clientId, Long applicationId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature introuvable"));
+
+        Offer offer = offerRepository.findById(app.getOfferId())
+                .orElseThrow(() -> new ResourceNotFoundException("Offre introuvable"));
+
+        if (!offer.getClientId().equals(clientId)) {
+            throw new ForbiddenException("Accès refusé");
+        }
+
+        if (app.getStatus() != ApplicationStatus.AWAITING_VALIDATION) {
+            throw new ConflictException("Cette mission n'est pas en attente de validation");
+        }
+
+        app.setStatus(ApplicationStatus.COMPLETED);
+        applicationRepository.save(app);
+
+        // Release escrow: move funds from client pendingBalance + pay freelancer
+        if (app.getProposedBudget() != null) {
+            try {
+                walletClient.clientEscrowRelease(new EscrowRequest(
+                        clientId,
+                        app.getProposedBudget(),
+                        app.getId(),
+                        "Paiement validé pour « " + offer.getTitle() + " »"
+                ));
+                walletClient.freelancerEscrowHold(new EscrowRequest(
+                        app.getFreelancerId(),
+                        app.getProposedBudget(),
+                        app.getId(),
+                        "Paiement reçu pour « " + offer.getTitle() + " »"
+                ));
+                walletClient.freelancerEscrowRelease(new EscrowRequest(
+                        app.getFreelancerId(),
+                        app.getProposedBudget(),
+                        app.getId(),
+                        "Fonds disponibles pour « " + offer.getTitle() + " »"
+                ));
+            } catch (Exception e) {
+                log.warn("Wallet escrow release failed for application {}: {}", applicationId, e.getMessage());
+            }
+        }
+
+        // Increment freelancer completed missions
+        try {
+            profileClient.incrementCompletedMissions(app.getFreelancerId());
+        } catch (Exception e) {
+            log.warn("Profile update failed for freelancer {}: {}", app.getFreelancerId(), e.getMessage());
+        }
+
+        // Notify freelancer
+        notificationService.create(
+                app.getFreelancerId(),
+                NotificationType.MISSION_VALIDATED,
+                "Mission validée !",
+                "Le client a validé votre mission « " + offer.getTitle() + " ». Le paiement a été libéré.",
+                offer.getId(), applicationId
+        );
+
+        // Notify client
+        notificationService.create(
+                clientId,
+                NotificationType.MISSION_VALIDATED,
+                "Mission clôturée",
+                "Vous avez validé la mission « " + offer.getTitle() + " ». N'oubliez pas de laisser un avis.",
+                offer.getId(), applicationId
+        );
+
+        return toDTO(app, offer.getTitle(), offer);
     }
 
     @Transactional
@@ -190,6 +284,20 @@ public class ApplicationService {
             throw new ForbiddenException("Accès refusé");
         if (app.getStatus() != ApplicationStatus.PENDING)
             throw new ConflictException("Seules les candidatures en attente peuvent être acceptées");
+
+        // Hold client funds in escrow if proposed budget exists
+        if (app.getProposedBudget() != null) {
+            try {
+                walletClient.clientEscrowHold(new EscrowRequest(
+                        clientId,
+                        app.getProposedBudget(),
+                        app.getId(),
+                        "Fonds bloqués pour « " + offer.getTitle() + " »"
+                ));
+            } catch (Exception e) {
+                log.warn("Client escrow hold failed for application {}: {}", applicationId, e.getMessage());
+            }
+        }
 
         app.setStatus(ApplicationStatus.ACCEPTED);
         applicationRepository.save(app);

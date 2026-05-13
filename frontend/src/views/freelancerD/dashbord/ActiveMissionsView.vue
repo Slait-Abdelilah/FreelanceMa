@@ -26,16 +26,11 @@
           </div>
           <div class="h-6 w-20 bg-[#F4F4ED] rounded-full"></div>
         </div>
-        <div class="flex gap-4 mt-4">
-          <div class="h-3 w-24 bg-[#F4F4ED] rounded"></div>
-          <div class="h-3 w-24 bg-[#F4F4ED] rounded"></div>
-          <div class="h-3 w-20 bg-[#F4F4ED] rounded"></div>
-        </div>
       </div>
     </div>
 
     <!-- ÉTAT VIDE -->
-    <div v-else-if="missions.length === 0"
+    <div v-else-if="missions.length === 0 && awaitingValidation.length === 0"
          class="bg-white rounded-xl border border-dashed border-[#EBEBE5] py-20 text-center">
       <div class="w-12 h-12 bg-[#F4F4ED] rounded-xl flex items-center justify-center mx-auto mb-4">
         <svg class="w-6 h-6 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
@@ -52,12 +47,52 @@
       </RouterLink>
     </div>
 
-    <!-- LISTE DES MISSIONS -->
-    <div v-else class="space-y-3">
+    <!-- EN ATTENTE DE VALIDATION -->
+    <div v-if="!loading && awaitingValidation.length > 0" class="space-y-3">
+      <div class="flex items-center gap-3">
+        <div class="flex-1 h-px bg-amber-200"></div>
+        <span class="text-[11px] text-amber-600 font-semibold flex items-center gap-1.5">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          En attente de validation ({{ awaitingValidation.length }})
+        </span>
+        <div class="flex-1 h-px bg-amber-200"></div>
+      </div>
+      <div v-for="mission in awaitingValidation" :key="mission.id"
+           class="bg-amber-50 rounded-xl border border-amber-200 p-5">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <h2 class="text-[14px] font-semibold text-ink truncate">{{ mission.offerTitle }}</h2>
+            <p class="text-xs text-[#9C9A92] mt-0.5">
+              Livrée le {{ formatDate(mission.completedAt) }}
+            </p>
+          </div>
+          <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 whitespace-nowrap flex-shrink-0 flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Validation en cours
+          </span>
+        </div>
+        <p class="text-[12px] text-amber-700 mt-3 bg-amber-100 border border-amber-200 rounded-lg px-3 py-2">
+          Le client doit valider votre travail. Le paiement sera libéré dès validation.
+        </p>
+        <div v-if="mission.proposedBudget" class="mt-3 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33"/>
+          </svg>
+          <span class="text-[13px] font-semibold text-ink tabular-nums">{{ Number(mission.proposedBudget).toLocaleString('fr-MA') }} DH</span>
+          <span class="text-xs text-[#9C9A92]">en attente de libération</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MISSIONS EN COURS -->
+    <div v-if="!loading && missions.length > 0" class="space-y-3">
       <div v-for="mission in missions" :key="mission.id"
            class="bg-white rounded-xl border border-[#EBEBE5] p-5">
 
-        <!-- ligne principale -->
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <h2 class="text-[14px] font-semibold text-ink truncate">{{ mission.offerTitle }}</h2>
@@ -71,25 +106,14 @@
           </span>
         </div>
 
-        <!-- détails -->
         <div class="flex flex-wrap gap-x-6 gap-y-1.5 mt-4">
-
           <div v-if="mission.proposedBudget" class="flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33"/>
             </svg>
-            <span class="text-[13px] font-semibold text-ink tabular-nums">{{ mission.proposedBudget.toLocaleString('fr-MA') }} DH</span>
+            <span class="text-[13px] font-semibold text-ink tabular-nums">{{ Number(mission.proposedBudget).toLocaleString('fr-MA') }} DH</span>
             <span class="text-xs text-[#9C9A92]">proposé</span>
           </div>
-
-          <div v-else-if="mission.offerBudgetMin || mission.offerBudgetMax" class="flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33"/>
-            </svg>
-            <span class="text-[13px] font-semibold text-ink tabular-nums">{{ offerBudget(mission) }}</span>
-            <span class="text-xs text-[#9C9A92]">budget</span>
-          </div>
-
           <div v-if="mission.proposedDays" class="flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/>
@@ -97,7 +121,6 @@
             <span class="text-[13px] text-ink tabular-nums">{{ mission.proposedDays }} jours</span>
             <span class="text-xs text-[#9C9A92]">délai prévu</span>
           </div>
-
           <div v-if="mission.offerCategory" class="flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/>
@@ -105,10 +128,8 @@
             </svg>
             <span class="text-[13px] text-[#5F5E5A]">{{ mission.offerCategory }}</span>
           </div>
-
         </div>
 
-        <!-- barre de progression par rapport au délai -->
         <div v-if="mission.proposedDays" class="mt-4">
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-[11px] text-[#9C9A92]">Progression (délai)</span>
@@ -124,7 +145,6 @@
           </div>
         </div>
 
-        <!-- actions -->
         <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#EBEBE5]">
           <RouterLink to="/freelancer/messages"
                       class="text-[12px] font-medium text-[#73726C] hover:text-ink transition flex items-center gap-1.5">
@@ -147,7 +167,6 @@
             {{ completing === mission.id ? 'En cours...' : 'Marquer terminé' }}
           </button>
         </div>
-
       </div>
     </div>
 
@@ -159,7 +178,7 @@
         <div class="flex-1 h-px bg-[#EBEBE5]"></div>
       </div>
       <div v-for="mission in completed" :key="mission.id"
-           class="bg-white rounded-xl border border-[#EBEBE5] p-5 opacity-60">
+           class="bg-white rounded-xl border border-[#EBEBE5] p-5 opacity-70">
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <h2 class="text-[14px] font-medium text-ink truncate">{{ mission.offerTitle }}</h2>
@@ -167,13 +186,20 @@
               Terminée le {{ formatDate(mission.completedAt) }}
             </p>
           </div>
-          <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#F4F4ED] text-[#73726C] whitespace-nowrap flex-shrink-0">
-            Terminée
-          </span>
+          <div class="flex items-center gap-2">
+            <button v-if="!hasReview(mission.id)"
+                    @click="openReview(mission)"
+                    class="text-[11px] font-semibold text-amber-600 border border-amber-200 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-full transition">
+              Laisser un avis
+            </button>
+            <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#F4F4ED] text-[#73726C] whitespace-nowrap flex-shrink-0">
+              Terminée
+            </span>
+          </div>
         </div>
-        <div v-if="mission.proposedBudget || mission.offerBudgetMin" class="mt-3">
+        <div v-if="mission.proposedBudget" class="mt-3">
           <span class="text-[13px] font-semibold text-ink tabular-nums">
-            {{ mission.proposedBudget ? Number(mission.proposedBudget).toLocaleString('fr-MA') + ' DH' : offerBudget(mission) }}
+            {{ Number(mission.proposedBudget).toLocaleString('fr-MA') }} DH
           </span>
         </div>
       </div>
@@ -195,6 +221,58 @@
       </div>
     </Transition>
 
+    <!-- REVIEW MODAL -->
+    <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0"
+                leave-active-class="transition duration-150" leave-to-class="opacity-0">
+      <div v-if="reviewModal.open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+           @click.self="reviewModal.open = false">
+        <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 scale-95"
+                    leave-active-class="transition duration-150" leave-to-class="opacity-0 scale-95">
+          <div v-if="reviewModal.open" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-[16px] font-bold text-ink mb-1">Évaluer le client</h3>
+            <p class="text-[13px] text-[#73726C] mb-5">
+              {{ reviewModal.mission?.offerTitle }}
+            </p>
+
+            <!-- Stars -->
+            <div class="mb-5">
+              <p class="text-[12px] font-medium text-ink mb-2">Note (obligatoire)</p>
+              <div class="flex gap-2">
+                <button v-for="star in 5" :key="star"
+                        @click="reviewForm.rating = star"
+                        class="text-3xl transition-transform hover:scale-110 focus:outline-none">
+                  <span :class="star <= reviewForm.rating ? 'text-amber-400' : 'text-[#EBEBE5]'">★</span>
+                </button>
+              </div>
+              <p class="text-[11px] text-[#9C9A92] mt-1">
+                {{ ratingLabel(reviewForm.rating) }}
+              </p>
+            </div>
+
+            <!-- Comment -->
+            <div class="mb-5">
+              <label class="text-[12px] font-medium text-ink block mb-1.5">Commentaire (optionnel)</label>
+              <textarea v-model="reviewForm.comment" rows="3"
+                        placeholder="Décrivez votre expérience de collaboration..."
+                        class="w-full text-[13px] text-ink border border-[#EBEBE5] rounded-lg px-3 py-2.5 resize-none focus:outline-none focus:border-ink transition placeholder:text-[#9C9A92]"></textarea>
+            </div>
+
+            <div class="flex gap-3">
+              <button @click="reviewModal.open = false"
+                      class="flex-1 text-[13px] font-medium text-[#73726C] border border-[#EBEBE5] rounded-lg py-2.5 hover:bg-[#F4F4ED] transition">
+                Annuler
+              </button>
+              <button @click="submitReview"
+                      :disabled="!reviewForm.rating || submittingReview"
+                      class="flex-1 text-[13px] font-semibold bg-ink text-white rounded-lg py-2.5 hover:bg-[#1A1A18] disabled:opacity-50 transition">
+                {{ submittingReview ? 'Envoi...' : 'Envoyer l\'avis' }}
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -207,17 +285,28 @@ const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getIte
 
 const loading = ref(true)
 const completing = ref(null)
+const submittingReview = ref(false)
 const toast = ref({ show: false, message: '', type: 'success' })
 const applications = ref([])
+const myReviews = ref(new Set()) // set of applicationIds I've already reviewed
+
+const reviewModal = ref({ open: false, mission: null })
+const reviewForm = ref({ rating: 0, comment: '' })
 
 const missions = computed(() =>
   applications.value.filter(a => a.status === 'ACCEPTED')
+)
+
+const awaitingValidation = computed(() =>
+  applications.value.filter(a => a.status === 'AWAITING_VALIDATION')
 )
 
 const completed = computed(() =>
   applications.value.filter(a => a.status === 'COMPLETED')
     .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
 )
+
+const hasReview = (applicationId) => myReviews.value.has(applicationId)
 
 const loadMissions = async () => {
   loading.value = true
@@ -237,12 +326,41 @@ const completeMission = async (mission) => {
     const { data } = await axios.put(`${API_URL}/api/applications/${mission.id}/complete`, {}, headers())
     const idx = applications.value.findIndex(a => a.id === mission.id)
     if (idx !== -1) applications.value[idx] = data
-    showToast('Mission marquée comme terminée !')
+    showToast('Travail soumis ! En attente de validation par le client.')
   } catch (err) {
     showToast(err.response?.data?.message || 'Erreur lors de la mise à jour', 'error')
   } finally {
     completing.value = null
   }
+}
+
+const openReview = (mission) => {
+  reviewModal.value = { open: true, mission }
+  reviewForm.value = { rating: 0, comment: '' }
+}
+
+const submitReview = async () => {
+  if (!reviewForm.value.rating) return
+  submittingReview.value = true
+  try {
+    await axios.post(`${API_URL}/api/reviews`, {
+      applicationId: reviewModal.value.mission.id,
+      rating: reviewForm.value.rating,
+      comment: reviewForm.value.comment || null
+    }, headers())
+    myReviews.value.add(reviewModal.value.mission.id)
+    reviewModal.value.open = false
+    showToast('Avis envoyé, merci !')
+  } catch (err) {
+    showToast(err.response?.data?.message || 'Erreur lors de l\'envoi', 'error')
+  } finally {
+    submittingReview.value = false
+  }
+}
+
+const ratingLabel = (r) => {
+  const labels = { 0: '', 1: 'Très mauvais', 2: 'Mauvais', 3: 'Correct', 4: 'Bien', 5: 'Excellent' }
+  return labels[r] || ''
 }
 
 const formatDate = (iso) => {
@@ -260,14 +378,6 @@ const daysElapsed = (iso) => {
 const progressPercent = (mission) => {
   if (!mission.proposedDays) return 0
   return Math.round((daysElapsed(mission.createdAt) / mission.proposedDays) * 100)
-}
-
-const offerBudget = (m) => {
-  if (m.offerBudgetMin && m.offerBudgetMax)
-    return `${Number(m.offerBudgetMin).toLocaleString('fr-MA')}–${Number(m.offerBudgetMax).toLocaleString('fr-MA')} DH`
-  if (m.offerBudgetMin) return `${Number(m.offerBudgetMin).toLocaleString('fr-MA')} DH`
-  if (m.offerBudgetMax) return `${Number(m.offerBudgetMax).toLocaleString('fr-MA')} DH`
-  return '—'
 }
 
 const showToast = (message, type = 'success') => {

@@ -63,9 +63,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/applications/{id}").hasRole("FREELANCER")
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/complete").hasRole("FREELANCER")
                         .requestMatchers(HttpMethod.DELETE, "/api/applications/{id}").hasRole("FREELANCER")
-                        // accept/reject candidature : CLIENT uniquement
+                        // accept/reject/validate candidature : CLIENT uniquement
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/accept").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/reject").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/validate").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/applications/offer/{offerId}").hasRole("CLIENT")
+                        // avis : lecture publique, écriture authentifiée
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
                         // favoris : FREELANCER uniquement
                         .requestMatchers("/api/favorites/**").hasRole("FREELANCER")
                         // notifications : tout utilisateur connecté

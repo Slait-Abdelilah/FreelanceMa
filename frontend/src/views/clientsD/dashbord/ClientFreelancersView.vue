@@ -416,6 +416,54 @@
                   </div>
                 </div>
 
+                <!-- Avis clients -->
+                <div>
+                  <h3 class="text-[11px] font-bold text-[#9C9A92] uppercase tracking-[0.08em] mb-2.5">
+                    Avis clients
+                    <span v-if="reviews.length" class="normal-case font-normal text-[#B4B2A9] ml-1">({{ reviews.length }})</span>
+                  </h3>
+                  <div v-if="loadingReviews" class="space-y-3">
+                    <div v-for="i in 2" :key="i" class="bg-[#FAFAF7] rounded-xl p-4 animate-pulse">
+                      <div class="flex gap-3">
+                        <div class="w-8 h-8 bg-[#EBEBE5] rounded-full flex-shrink-0"></div>
+                        <div class="flex-1 space-y-2">
+                          <div class="h-3 bg-[#EBEBE5] rounded w-1/4"></div>
+                          <div class="h-3 bg-[#EBEBE5] rounded w-3/4"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else-if="reviews.length === 0"
+                       class="text-center py-6 bg-[#FAFAF7] rounded-xl border border-dashed border-[#EBEBE5]">
+                    <p class="text-[12px] text-[#9C9A92]">Aucun avis pour le moment</p>
+                  </div>
+                  <div v-else class="space-y-3">
+                    <div v-for="review in reviews" :key="review.id"
+                         class="bg-[#FAFAF7] rounded-xl p-4 border border-[#EBEBE5]">
+                      <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-[#EBEBE5] rounded-full flex items-center justify-center text-[11px] font-bold text-[#73726C] flex-shrink-0">
+                          C
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <div class="flex gap-0.5">
+                              <svg v-for="s in 5" :key="s" class="w-3 h-3"
+                                   :class="s <= review.rating ? 'fill-amber-400' : 'fill-[#EBEBE5]'"
+                                   viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                              </svg>
+                            </div>
+                            <span class="text-[10px] text-[#9C9A92]">{{ formatReviewDate(review.createdAt) }}</span>
+                          </div>
+                          <p v-if="review.comment" class="text-[12px] text-[#5F5E5A] leading-relaxed">
+                            "{{ review.comment }}"
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Liens -->
                 <div v-if="selected.githubUrl || selected.linkedinUrl || selected.portfolioUrl">
                   <h3 class="text-[11px] font-bold text-[#9C9A92] uppercase tracking-[0.08em] mb-2.5">Liens</h3>
@@ -477,6 +525,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 const loading         = ref(true)
 const freelancers     = ref([])
 const selected        = ref(null)
+const reviews         = ref([])
+const loadingReviews  = ref(false)
 const searchQuery     = ref('')
 const filterAvailable = ref('')
 const filterLevel     = ref('')
@@ -540,7 +590,19 @@ const filtered = computed(() => {
 
 const total = computed(() => filtered.value.length)
 
-const openProfile = (f) => { selected.value = f }
+const openProfile = async (f) => {
+  selected.value = f
+  reviews.value = []
+  loadingReviews.value = true
+  try {
+    const { data } = await axios.get(`${API_URL}/api/reviews/freelancer/${f.id}`)
+    reviews.value = data || []
+  } catch {
+    reviews.value = []
+  } finally {
+    loadingReviews.value = false
+  }
+}
 
 const fullName = (f) =>
   [f.firstName, f.lastName].filter(Boolean).join(' ') || f.email?.split('@')[0] || `Freelancer #${f.id}`
@@ -553,6 +615,13 @@ const skillTags = (s) => s ? s.split(',').map(t => t.trim()).filter(Boolean) : [
 
 const palette = ['#EDE9DC', '#DCE9ED', '#E9DCED', '#DCE9DC', '#EDE2DC', '#DCDCE9', '#E9EDDC', '#EDD9E0']
 const avatarBg = (id) => palette[(id || 0) % palette.length]
+
+const formatReviewDate = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const months = ['jan', 'fév', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+}
 
 const levelLabel = (l) => ({ JUNIOR: 'Junior', MID: 'Intermédiaire', SENIOR: 'Senior', EXPERT: 'Expert' }[l] || l)
 const levelClass = (l) => ({

@@ -108,6 +108,52 @@ public class WalletService {
         return toTransactionDTO(transactionRepository.save(tx));
     }
 
+    // Client side: block funds when accepting an application
+    @Transactional
+    public TransactionDTO clientEscrowHold(EscrowRequest request) {
+        Wallet wallet = getOrCreateWallet(request.getUserId());
+
+        if (wallet.getBalance().compareTo(request.getAmount()) < 0) {
+            throw new AppException("Solde client insuffisant pour bloquer les fonds", HttpStatus.BAD_REQUEST);
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(request.getAmount()));
+        wallet.setPendingBalance(wallet.getPendingBalance().add(request.getAmount()));
+        walletRepository.save(wallet);
+
+        Transaction tx = Transaction.builder()
+                .walletId(wallet.getId())
+                .amount(request.getAmount().negate())
+                .type(TransactionType.ESCROW_HOLD)
+                .status(TransactionStatus.COMPLETED)
+                .description(request.getDescription())
+                .missionId(request.getMissionId())
+                .build();
+
+        return toTransactionDTO(transactionRepository.save(tx));
+    }
+
+    // Client side: release funds from pending when mission is validated
+    @Transactional
+    public TransactionDTO clientEscrowRelease(EscrowRequest request) {
+        Wallet wallet = getOrCreateWallet(request.getUserId());
+
+        BigDecimal release = request.getAmount().min(wallet.getPendingBalance());
+        wallet.setPendingBalance(wallet.getPendingBalance().subtract(release));
+        walletRepository.save(wallet);
+
+        Transaction tx = Transaction.builder()
+                .walletId(wallet.getId())
+                .amount(release.negate())
+                .type(TransactionType.ESCROW_RELEASE)
+                .status(TransactionStatus.COMPLETED)
+                .description(request.getDescription())
+                .missionId(request.getMissionId())
+                .build();
+
+        return toTransactionDTO(transactionRepository.save(tx));
+    }
+
     @Transactional
     public TransactionDTO requestWithdrawal(Long userId, WithdrawalRequest request) {
         Wallet wallet = getOrCreateWallet(userId);

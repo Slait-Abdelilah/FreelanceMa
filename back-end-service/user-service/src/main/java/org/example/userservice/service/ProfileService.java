@@ -56,6 +56,23 @@ public class ProfileService {
         return toDTO(profile);
     }
 
+    @Transactional
+    public void updateRating(Long userId, double averageRating, int totalReviews) {
+        userProfileRepository.findById(userId).ifPresent(profile -> {
+            profile.setAverageRating(averageRating);
+            profile.setTotalReviews(totalReviews);
+            userProfileRepository.save(profile);
+        });
+    }
+
+    @Transactional
+    public void incrementCompletedMissions(Long userId) {
+        userProfileRepository.findById(userId).ifPresent(profile -> {
+            profile.setCompletedMissions(profile.getCompletedMissions() + 1);
+            userProfileRepository.save(profile);
+        });
+    }
+
     private ProfileDTO toDTO(UserProfile p) {
         return ProfileDTO.builder()
                 .id(p.getUserId())
