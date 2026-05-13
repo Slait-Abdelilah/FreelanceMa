@@ -85,12 +85,13 @@ public class MessageService {
         try {
             Firestore firestore = FirestoreClient.getFirestore();
             Map<String, Object> data = new HashMap<>();
-            data.put("clientId",     String.valueOf(offer.getClientId()));
-            data.put("freelancerId", String.valueOf(app.getFreelancerId()));
-            data.put("offerTitle",   offer.getTitle());
+            data.put("clientId",      String.valueOf(offer.getClientId()));
+            data.put("freelancerId",  String.valueOf(app.getFreelancerId()));
+            data.put("offerTitle",    offer.getTitle());
             data.put("applicationId", app.getId());
-            // merge = ne pas écraser les messages existants
-            firestore.collection("conversations").document(conversationId).set(data, SetOptions.merge());
+            // .get() rend l'opération synchrone — le document existe avant le retour du token
+            firestore.collection("conversations").document(conversationId)
+                    .set(data, SetOptions.merge()).get();
         } catch (Exception e) {
             log.warn("Could not create Firestore conversation {}: {}", conversationId, e.getMessage());
         }

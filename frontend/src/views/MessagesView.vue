@@ -264,11 +264,17 @@ const selectConversation = async (conv) => {
       collection(db, 'conversations', data.conversationId, 'messages'),
       orderBy('createdAt', 'asc')
     )
-    unsubscribeMessages = onSnapshot(q, (snapshot) => {
-      messages.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      loadingMessages.value = false
-      scrollToBottom()
-    })
+    unsubscribeMessages = onSnapshot(q,
+      (snapshot) => {
+        messages.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        loadingMessages.value = false
+        scrollToBottom()
+      },
+      (err) => {
+        console.error('Firestore snapshot error:', err)
+        loadingMessages.value = false
+      }
+    )
   } catch (e) {
     console.error('Failed to open conversation', e)
     loadingMessages.value = false
