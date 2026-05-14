@@ -1,6 +1,7 @@
 package org.example.userservice.config;
 
 import lombok.RequiredArgsConstructor;
+import org.example.userservice.security.InternalServiceFilter;
 import org.example.userservice.security.JwtFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +25,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final InternalServiceFilter internalServiceFilter;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -58,11 +60,12 @@ public class SecurityConfig {
                                 .includeSubDomains(true)
                                 .maxAgeInSeconds(31536000)))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/internal/**").permitAll()
+                        .requestMatchers("/internal/**").hasRole("INTERNAL")
                         .requestMatchers("/api/profile/*/public").permitAll()
                         .requestMatchers("/api/portfolio/public/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(internalServiceFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

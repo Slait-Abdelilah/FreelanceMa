@@ -335,6 +335,16 @@ public class ApplicationService {
         return toDTO(app, offer.getTitle(), offer);
     }
 
+    public List<ApplicationDTO> getCompletedWithFreelancer(Long clientId, Long freelancerId) {
+        return applicationRepository.findCompletedByClientAndFreelancer(clientId, freelancerId)
+                .stream()
+                .map(app -> {
+                    Offer offer = offerRepository.findById(app.getOfferId()).orElse(null);
+                    return toDTO(app, offer != null ? offer.getTitle() : "Offre supprimée", offer);
+                })
+                .collect(Collectors.toList());
+    }
+
     public ApplicationDTO toDTO(Application a, String offerTitle) {
         return toDTO(a, offerTitle, null);
     }

@@ -68,6 +68,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/reject").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/validate").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.GET, "/api/applications/offer/{offerId}").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/applications/completed-with/{freelancerId}").hasRole("CLIENT")
                         // avis : /my nécessite auth, lectures publiques, écriture authentifiée
                         .requestMatchers(HttpMethod.GET, "/api/reviews/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()

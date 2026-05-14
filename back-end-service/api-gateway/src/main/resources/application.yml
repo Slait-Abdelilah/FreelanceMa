@@ -66,6 +66,20 @@ spring:
             - JwtAuth
 
         # ── User Service ──────────────────────────────────────────────────────
+        - id: job-service-messages
+          uri: lb://job-service
+          predicates:
+            - Path=/api/messages/**
+          filters:
+            - JwtAuth
+
+        - id: job-service-reviews
+          uri: lb://job-service
+          predicates:
+            - Path=/api/reviews/**
+          filters:
+            - JwtAuth
+
         - id: user-service-profile
           uri: lb://user-service
           predicates:

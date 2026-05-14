@@ -3,6 +3,8 @@ package org.example.jobservice.repository;
 import org.example.jobservice.entity.Application;
 import org.example.jobservice.enums.ApplicationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,5 +27,9 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     List<Application> findByFreelancerIdAndStatusOrderByCreatedAtDesc(
             Long freelancerId, ApplicationStatus status
     );
+
+    // missions complétées entre un client et un freelancer donné
+    @Query("SELECT a FROM Application a WHERE a.freelancerId = :freelancerId AND a.status = 'COMPLETED' AND a.offerId IN (SELECT o.id FROM Offer o WHERE o.clientId = :clientId)")
+    List<Application> findCompletedByClientAndFreelancer(@Param("clientId") Long clientId, @Param("freelancerId") Long freelancerId);
 }
 

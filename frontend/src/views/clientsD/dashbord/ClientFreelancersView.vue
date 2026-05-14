@@ -496,16 +496,48 @@
             </div>
 
             <!-- ── FOOTER ── -->
-            <div class="px-6 py-4 border-t border-[#EBEBE5] flex-shrink-0">
-              <div class="flex items-center gap-2 p-3.5 bg-[#FAFAF7] border border-[#EBEBE5] rounded-xl">
-                <svg class="w-4 h-4 text-[#B4B2A9] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
-                </svg>
-                <div class="flex-1">
-                  <p class="text-[12px] font-semibold text-ink">Messagerie — Bientôt disponible</p>
-                  <p class="text-[11px] text-[#9C9A92]">Vous pourrez contacter ce freelancer directement</p>
+            <div class="px-6 py-4 border-t border-[#EBEBE5] flex-shrink-0 space-y-3">
+
+              <!-- Formulaire d'avis -->
+              <div v-if="showReviewForm" class="bg-[#FAFAF7] border border-[#EBEBE5] rounded-xl p-4 space-y-3">
+                <p class="text-[12px] font-semibold text-ink">Laisser un avis pour {{ fullName(selected) }}</p>
+                <p class="text-[11px] text-[#9C9A92]">Mission : {{ pendingReviewApp?.offerTitle }}</p>
+                <!-- Étoiles -->
+                <div class="flex gap-1">
+                  <button v-for="s in 5" :key="s" @click="reviewRating = s" type="button"
+                          class="transition-transform hover:scale-110">
+                    <svg class="w-6 h-6" :class="s <= reviewRating ? 'fill-amber-400' : 'fill-[#EBEBE5]'" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  </button>
+                </div>
+                <textarea v-model="reviewComment" rows="3"
+                          placeholder="Décrivez votre expérience avec ce freelancer (optionnel)..."
+                          class="w-full text-[12px] bg-white border border-[#EBEBE5] focus:border-[#B4B2A9] rounded-xl px-3 py-2.5 outline-none resize-none placeholder:text-[#B4B2A9] transition-colors"></textarea>
+                <div v-if="reviewError" class="text-[11px] text-red-500">{{ reviewError }}</div>
+                <div class="flex gap-2">
+                  <button @click="showReviewForm = false"
+                          class="flex-1 text-[12px] font-medium text-[#9C9A92] hover:text-ink border border-[#EBEBE5] hover:border-[#D3D1C7] bg-white rounded-xl py-2 transition-all">
+                    Annuler
+                  </button>
+                  <button @click="submitReview" :disabled="reviewRating === 0 || submittingReview"
+                          class="flex-1 text-[12px] font-semibold text-white rounded-xl py-2 transition-all disabled:opacity-50"
+                          :class="reviewRating > 0 && !submittingReview ? 'bg-ink hover:bg-[#2C2B27]' : 'bg-[#B4B2A9] cursor-not-allowed'">
+                    {{ submittingReview ? 'Envoi…' : 'Publier l\'avis' }}
+                  </button>
                 </div>
               </div>
+
+              <!-- Bouton Laisser un avis (si mission complétée non reviewée) -->
+              <button v-else-if="pendingReviewApp"
+                      @click="openReviewForm"
+                      class="w-full flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-[#F4F4ED] hover:bg-[#EBEBE5] rounded-xl py-3 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/>
+                </svg>
+                Laisser un avis
+              </button>
+
             </div>
 
           </div>
@@ -533,6 +565,19 @@ const filterLevel     = ref('')
 const sortBy          = ref('name')
 const viewMode        = ref('grid')
 let   searchTimer     = null
+
+// review state
+const myReviewedIds    = ref(new Set())
+const completedApps    = ref([])
+const showReviewForm   = ref(false)
+const reviewRating     = ref(0)
+const reviewComment    = ref('')
+const reviewError      = ref('')
+const submittingReview = ref(false)
+
+const pendingReviewApp = computed(() =>
+  completedApps.value.find(a => !myReviewedIds.value.has(a.id)) || null
+)
 
 const levels = [
   { value: 'JUNIOR',  label: 'Junior',        activeClass: 'bg-blue-50 text-blue-700 border-blue-200'   },
@@ -593,14 +638,52 @@ const total = computed(() => filtered.value.length)
 const openProfile = async (f) => {
   selected.value = f
   reviews.value = []
+  completedApps.value = []
+  showReviewForm.value = false
+  reviewRating.value = 0
+  reviewComment.value = ''
+  reviewError.value = ''
   loadingReviews.value = true
   try {
-    const { data } = await axios.get(`${API_URL}/api/reviews/freelancer/${f.id}`)
-    reviews.value = data || []
+    const [{ data: revData }, { data: appData }] = await Promise.all([
+      axios.get(`${API_URL}/api/reviews/freelancer/${f.id}`),
+      axios.get(`${API_URL}/api/applications/completed-with/${f.id}`, headers()),
+    ])
+    reviews.value      = revData || []
+    completedApps.value = appData || []
   } catch {
     reviews.value = []
   } finally {
     loadingReviews.value = false
+  }
+}
+
+const openReviewForm = () => {
+  showReviewForm.value = true
+  reviewRating.value   = 0
+  reviewComment.value  = ''
+  reviewError.value    = ''
+}
+
+const submitReview = async () => {
+  if (reviewRating.value === 0) return
+  submittingReview.value = true
+  reviewError.value = ''
+  try {
+    await axios.post(`${API_URL}/api/reviews`, {
+      applicationId: pendingReviewApp.value.id,
+      rating:        reviewRating.value,
+      comment:       reviewComment.value || null,
+    }, headers())
+    myReviewedIds.value.add(pendingReviewApp.value.id)
+    showReviewForm.value = false
+    // reload reviews for this freelancer
+    const { data } = await axios.get(`${API_URL}/api/reviews/freelancer/${selected.value.id}`)
+    reviews.value = data || []
+  } catch (err) {
+    reviewError.value = err?.response?.data?.message || 'Erreur lors de l\'envoi de l\'avis'
+  } finally {
+    submittingReview.value = false
   }
 }
 
@@ -631,5 +714,13 @@ const levelClass = (l) => ({
   EXPERT:  'bg-purple-50 text-purple-600 border-purple-100',
 }[l] || 'bg-[#F4F4ED] text-[#5F5E5A] border-[#EBEBE5]')
 
-onMounted(() => load())
+onMounted(async () => {
+  load()
+  try {
+    const { data } = await axios.get(`${API_URL}/api/reviews/my`, headers())
+    myReviewedIds.value = new Set(data)
+  } catch {
+    // not critical
+  }
+})
 </script>

@@ -32,6 +32,8 @@ user-service:
 app:
   jwt:
     secret: "${JWT_SECRET}"
+  internal:
+    secret: ${INTERNAL_API_SECRET:dev-internal-secret-change-me}
 
 eureka:
   client:

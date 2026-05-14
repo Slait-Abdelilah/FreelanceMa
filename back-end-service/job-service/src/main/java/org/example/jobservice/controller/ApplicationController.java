@@ -77,4 +77,10 @@ public class ApplicationController {
         Long clientId = (Long) auth.getDetails();
         return ResponseEntity.ok(applicationService.getApplicationsForOffer(clientId, offerId));
     }
+
+    @GetMapping("/completed-with/{freelancerId}")
+    public ResponseEntity<List<ApplicationDTO>> getCompletedWith(Authentication auth, @PathVariable Long freelancerId) {
+        Long clientId = (Long) auth.getDetails();
+        return ResponseEntity.ok(applicationService.getCompletedWithFreelancer(clientId, freelancerId));
+    }
 }

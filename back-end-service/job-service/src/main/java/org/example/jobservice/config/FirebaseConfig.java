@@ -33,7 +33,7 @@ public class FirebaseConfig {
 
             FirebaseApp.initializeApp(options);
             log.info("Firebase initialized successfully");
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             log.error("Failed to initialize Firebase: {}", e.getMessage());
         }
     }

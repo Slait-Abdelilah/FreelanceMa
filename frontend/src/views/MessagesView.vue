@@ -39,6 +39,18 @@
       </div>
 
       <!-- Vide -->
+      <div v-else-if="conversationError" class="flex-1 flex items-center justify-center p-6 text-center">
+        <div>
+          <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center mx-auto mb-3">
+            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+          </div>
+          <p class="text-[12px] font-semibold text-ink">Messagerie indisponible</p>
+          <p class="text-[11px] text-[#9C9A92] mt-1">{{ conversationError }}</p>
+        </div>
+      </div>
+
       <div v-else class="flex-1 flex items-center justify-center p-6 text-center">
         <div>
           <div class="w-10 h-10 bg-[#F4F4ED] rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -99,6 +111,13 @@
           </div>
 
           <!-- Pas de messages -->
+          <div v-else-if="messageError" class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <p class="text-[13px] font-medium text-ink">Impossible d'ouvrir la conversation</p>
+              <p class="text-[12px] text-[#9C9A92] mt-1">{{ messageError }}</p>
+            </div>
+          </div>
+
           <div v-else-if="messages.length === 0" class="flex items-center justify-center h-full">
             <div class="text-center">
               <p class="text-[13px] font-medium text-ink">Démarrez la conversation</p>
@@ -173,20 +192,38 @@ const myId = computed(() => {
   try {
     const token = localStorage.getItem('token')
     if (!token) return null
-    const payload = JSON.parse(atob(token.split('.')[1]))
+    const payloadPart = token.split('.')[1]
+    const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=')
+    const payload = JSON.parse(atob(padded))
     return String(payload.userId)
   } catch { return null }
 })
 
 const userRole = JSON.parse(localStorage.getItem('user') || '{}').role || ''
 
+const firebaseAuthErrorMessage = (error) => {
+  if (error?.code === 'auth/configuration-not-found') {
+    return 'Firebase Authentication n est pas active pour ce projet. Activez Authentication dans Firebase Console.'
+  }
+  if (error?.code === 'auth/invalid-api-key') {
+    return 'Cle API Firebase invalide. Verifiez VITE_FIREBASE_API_KEY.'
+  }
+  if (error?.code === 'auth/network-request-failed') {
+    return 'Connexion Firebase impossible. Verifiez votre connexion reseau.'
+  }
+  return null
+}
+
 // ── STATE ────────────────────────────────────────────────────────────────────
 const conversations    = ref([])
 const loadingConvs     = ref(true)
+const conversationError = ref('')
 const selectedConv     = ref(null)
 const selectedConvId   = ref(null)
 const messages         = ref([])
 const loadingMessages  = ref(false)
+const messageError     = ref('')
 const newMessage       = ref('')
 const sending          = ref(false)
 const messagesContainer = ref(null)
@@ -195,6 +232,7 @@ let unsubscribeMessages = null
 // ── LOAD CONVERSATIONS ───────────────────────────────────────────────────────
 const loadConversations = async () => {
   loadingConvs.value = true
+  conversationError.value = ''
   try {
     const ACTIVE = ['ACCEPTED', 'AWAITING_VALIDATION', 'COMPLETED']
 
@@ -233,6 +271,7 @@ const loadConversations = async () => {
     }
   } catch (e) {
     console.error('Failed to load conversations', e)
+    conversationError.value = e?.response?.data?.message || 'Impossible de charger vos conversations.'
   } finally {
     loadingConvs.value = false
   }
@@ -247,6 +286,7 @@ const selectConversation = async (conv) => {
 
   selectedConv.value  = conv
   loadingMessages.value = true
+  messageError.value = ''
   messages.value = []
 
   try {
@@ -272,11 +312,15 @@ const selectConversation = async (conv) => {
       },
       (err) => {
         console.error('Firestore snapshot error:', err)
+        messageError.value = 'Acces Firestore refuse ou configuration Firebase invalide.'
         loadingMessages.value = false
       }
     )
   } catch (e) {
     console.error('Failed to open conversation', e)
+    messageError.value = firebaseAuthErrorMessage(e)
+      || e?.response?.data?.message
+      || 'Service de messagerie non disponible.'
     loadingMessages.value = false
   }
 }
@@ -290,6 +334,10 @@ const sendMessage = async () => {
   newMessage.value = ''
 
   try {
+    if (!myId.value) {
+      throw new Error('Utilisateur non identifie')
+    }
+
     await addDoc(
       collection(db, 'conversations', selectedConvId.value, 'messages'),
       {
@@ -302,6 +350,7 @@ const sendMessage = async () => {
     )
   } catch (e) {
     console.error('Failed to send message', e)
+    messageError.value = 'Message non envoye. Verifiez la configuration Firebase.'
     newMessage.value = content
   } finally {
     sending.value = false
