@@ -20,16 +20,20 @@ import org.example.backfreelance.repository.RefreshTokenRepository;
 import org.example.backfreelance.repository.UserRepository;
 import org.example.backfreelance.seecuriity.AuditLogger;
 import org.example.backfreelance.seecuriity.JwtUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class AuthService {
 
@@ -149,10 +153,12 @@ public class AuthService {
         String refreshToken = createRefreshToken(user);
         auditLogger.log("VERIFY_ACCOUNT", email);
 
-        // Notifier user-service de créer le profil + wallet
-        userEventPublisher.publishUserRegistered(new UserRegisteredEvent(
-                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), role
-        ));
+        // Publier APRÈS le commit de transaction — une erreur RabbitMQ ne doit pas
+        // annuler l'activation du compte
+        UserRegisteredEvent event = new UserRegisteredEvent(
+                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), role);
+        publishAfterCommit(() -> userEventPublisher.publishUserRegistered(event),
+                "user.registered pour userId=" + user.getId());
 
         return AuthResponse.builder()
                 .token(accessToken)
@@ -191,9 +197,10 @@ public class AuthService {
         auditLogger.log("VERIFY_EMAIL", user.getEmail());
 
         String role = (user instanceof Client) ? "CLIENT" : "FREELANCER";
-        userEventPublisher.publishUserRegistered(new UserRegisteredEvent(
-                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), role
-        ));
+        UserRegisteredEvent event = new UserRegisteredEvent(
+                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), role);
+        publishAfterCommit(() -> userEventPublisher.publishUserRegistered(event),
+                "user.registered pour userId=" + user.getId());
     }
 
     @Transactional
@@ -318,8 +325,10 @@ public class AuthService {
         userRepository.delete(user);
         auditLogger.log("DELETE_ACCOUNT", email);
 
-        // Notifier user-service de nettoyer portfolio + wallet
-        userEventPublisher.publishUserDeleted(new UserDeletedEvent(userId, email));
+        // Publier APRÈS le commit — ne pas bloquer la suppression si RabbitMQ est down
+        UserDeletedEvent event = new UserDeletedEvent(userId, email);
+        publishAfterCommit(() -> userEventPublisher.publishUserDeleted(event),
+                "user.deleted pour userId=" + userId);
     }
 
     private String createRefreshToken(User user) {
@@ -335,5 +344,29 @@ public class AuthService {
 
     private String generateSecureCode() {
         return String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
+    }
+
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 3 * * *")
+    @Transactional
+    public void cleanupExpiredTokens() {
+        refreshTokenRepository.deleteExpiredAndRevoked(LocalDateTime.now());
+        log.info("[Scheduler] Nettoyage des refresh tokens expirés effectué");
+    }
+
+    /**
+     * Enregistre une action à exécuter APRÈS le commit de la transaction courante.
+     * Garantit que l'échec de RabbitMQ ne rollback pas la transaction métier.
+     */
+    private void publishAfterCommit(Runnable action, String label) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    action.run();
+                } catch (Exception e) {
+                    log.warn("[RabbitMQ] Échec de publication {} : {}. Le profil/wallet sera créé à la prochaine connexion.", label, e.getMessage());
+                }
+            }
+        });
     }
 }

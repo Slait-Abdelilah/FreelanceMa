@@ -3,23 +3,32 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import { logoutUser } from '@/api/auth'
 
+const getStorage = () =>
+  sessionStorage.getItem('token') ? sessionStorage : localStorage
+
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref(localStorage.getItem('token') || null)
-  const refreshToken = ref(localStorage.getItem('refreshToken') || null)
-  const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
+  const storage = getStorage()
+
+  const token = ref(storage.getItem('token') || null)
+  const refreshToken = ref(storage.getItem('refreshToken') || null)
+  const user = ref(JSON.parse(storage.getItem('user') || 'null'))
 
   const isAuthenticated = computed(() => !!token.value && !!user.value?.role)
   const userRole = computed(() => user.value?.role || null)
 
-  function setAuth(newToken, userData, newRefreshToken) {
+  function setAuth(newToken, userData, newRefreshToken, rememberMe = true) {
     token.value = newToken
     user.value = userData
-    localStorage.setItem('token', newToken)
-    localStorage.setItem('user', JSON.stringify(userData))
+
+    const store = rememberMe ? localStorage : sessionStorage
+
+    store.setItem('token', newToken)
+    store.setItem('user', JSON.stringify(userData))
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+
     if (newRefreshToken) {
       refreshToken.value = newRefreshToken
-      localStorage.setItem('refreshToken', newRefreshToken)
+      store.setItem('refreshToken', newRefreshToken)
     }
   }
 
@@ -27,9 +36,10 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     refreshToken.value = null
     user.value = null
-    localStorage.removeItem('token')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('user')
+    ;['token', 'refreshToken', 'user'].forEach(k => {
+      localStorage.removeItem(k)
+      sessionStorage.removeItem(k)
+    })
     delete axios.defaults.headers.common['Authorization']
   }
 
@@ -40,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         await logoutUser(rt)
       } catch {
-        // ignore — session locale déjà détruite
+        // session locale déjà détruite
       }
     }
   }

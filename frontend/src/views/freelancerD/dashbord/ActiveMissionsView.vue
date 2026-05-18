@@ -1,275 +1,275 @@
 <template>
-  <div class="max-w-4xl mx-auto space-y-5">
+  <div class="pb-8">
 
-    <!-- EN-TÊTE -->
-    <div class="flex items-start justify-between gap-4">
+    <!-- ── En-tête ──────────────────────────────────────────────── -->
+    <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-xl font-bold text-ink">Missions actives</h1>
-        <p class="text-[13px] text-[#73726C] mt-0.5">Vos candidatures acceptées en cours</p>
+        <p class="text-sm text-ink-soft mt-0.5">
+          {{ loading ? '…' : `${allMissions.length} mission${allMissions.length > 1 ? 's' : ''}` }}
+        </p>
       </div>
       <RouterLink to="/freelancer/explore"
-                  class="flex items-center gap-1.5 bg-ink hover:bg-[#1A1A18] text-white text-[12px] font-semibold px-3 py-2 rounded-lg transition">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  class="flex items-center gap-1.5 text-sm font-medium text-ink border border-[#EBEBE5] hover:bg-[#F4F4ED] px-4 py-2 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
         </svg>
-        Explorer
+        Explorer les missions
       </RouterLink>
     </div>
 
-    <!-- LOADING SKELETON -->
-    <div v-if="loading" class="space-y-3">
-      <div v-for="i in 3" :key="i" class="bg-white rounded-xl border border-[#EBEBE5] p-5 animate-pulse">
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 space-y-2">
-            <div class="h-4 w-2/3 bg-[#EBEBE5] rounded"></div>
-            <div class="h-3 w-1/3 bg-[#F4F4ED] rounded"></div>
+    <!-- ── Chips filtres ─────────────────────────────────────────── -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      <button v-for="f in statusFilters" :key="f.value"
+              @click="selectedStatus = f.value"
+              class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition border"
+              :class="selectedStatus === f.value
+                ? `${f.activeBg} ${f.activeText} ${f.activeBorder}`
+                : 'bg-white border-[#EBEBE5] text-[#73726C] hover:text-ink hover:border-[#C4C3BC]'">
+        <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" :class="f.dot"></span>
+        {{ f.label }}
+        <span class="tabular-nums text-xs rounded-full px-1.5 py-0.5"
+              :class="selectedStatus === f.value ? f.countBg : 'bg-[#F4F4ED] text-[#9C9A92]'">
+          {{ getCountByStatus(f.value) }}
+        </span>
+      </button>
+    </div>
+
+    <!-- ── Chargement ────────────────────────────────────────────── -->
+    <div v-if="loading" class="space-y-2">
+      <div v-for="i in 3" :key="i"
+           class="bg-white border border-[#EBEBE5] rounded-xl flex overflow-hidden animate-pulse">
+        <div class="w-1 bg-[#E5E5E0] flex-shrink-0"></div>
+        <div class="flex-1 px-5 py-4 space-y-2.5">
+          <div class="h-3.5 bg-[#F4F4ED] rounded w-1/2"></div>
+          <div class="h-3 bg-[#F4F4ED] rounded w-1/3"></div>
+          <div class="h-1.5 bg-[#F4F4ED] rounded-full w-full mt-3"></div>
+          <div class="flex gap-2 pt-1">
+            <div class="h-7 w-28 bg-[#F4F4ED] rounded-lg"></div>
+            <div class="h-7 w-28 bg-[#F4F4ED] rounded-lg"></div>
           </div>
+        </div>
+        <div class="px-5 py-4 flex items-start">
           <div class="h-6 w-20 bg-[#F4F4ED] rounded-full"></div>
         </div>
       </div>
     </div>
 
-    <!-- ÉTAT VIDE -->
-    <div v-else-if="missions.length === 0 && awaitingValidation.length === 0"
-         class="bg-white rounded-xl border border-dashed border-[#EBEBE5] py-20 text-center">
+    <!-- ── État vide ─────────────────────────────────────────────── -->
+    <div v-else-if="filteredMissions.length === 0"
+         class="bg-white border border-[#EBEBE5] rounded-xl py-16 text-center">
       <div class="w-12 h-12 bg-[#F4F4ED] rounded-xl flex items-center justify-center mx-auto mb-4">
-        <svg class="w-6 h-6 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        <svg class="w-5 h-5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
       </div>
-      <h3 class="text-[14px] font-semibold text-ink mb-1">Aucune mission active</h3>
-      <p class="text-[13px] text-[#73726C] mb-6 max-w-xs mx-auto">
-        Postulez à des offres pour démarrer vos premières missions.
+      <p class="text-sm font-semibold text-ink mb-1">Aucune mission</p>
+      <p class="text-xs text-[#9C9A92] mb-5">
+        {{ selectedStatus === 'ALL'
+          ? 'Postulez à des offres pour démarrer vos premières missions.'
+          : 'Aucune mission avec ce statut.' }}
       </p>
-      <RouterLink to="/freelancer/explore"
-                  class="inline-flex items-center gap-2 bg-ink hover:bg-[#1A1A18] text-white text-[13px] font-semibold px-5 py-2.5 rounded-lg transition">
+      <RouterLink v-if="selectedStatus === 'ALL'" to="/freelancer/explore"
+                  class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600
+                         border border-brand-200 hover:bg-brand-50 px-4 py-2 rounded-lg transition">
         Explorer les offres
       </RouterLink>
     </div>
 
-    <!-- EN ATTENTE DE VALIDATION -->
-    <div v-if="!loading && awaitingValidation.length > 0" class="space-y-3">
-      <div class="flex items-center gap-3">
-        <div class="flex-1 h-px bg-amber-200"></div>
-        <span class="text-[11px] text-amber-600 font-semibold flex items-center gap-1.5">
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          En attente de validation ({{ awaitingValidation.length }})
-        </span>
-        <div class="flex-1 h-px bg-amber-200"></div>
-      </div>
-      <div v-for="mission in awaitingValidation" :key="mission.id"
-           class="bg-amber-50 rounded-xl border border-amber-200 p-5">
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 min-w-0">
-            <h2 class="text-[14px] font-semibold text-ink truncate">{{ mission.offerTitle }}</h2>
-            <p class="text-xs text-[#9C9A92] mt-0.5">
-              Livrée le {{ formatDate(mission.completedAt) }}
-            </p>
-          </div>
-          <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 whitespace-nowrap flex-shrink-0 flex items-center gap-1">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Validation en cours
-          </span>
-        </div>
-        <p class="text-[12px] text-amber-700 mt-3 bg-amber-100 border border-amber-200 rounded-lg px-3 py-2">
-          Le client doit valider votre travail. Le paiement sera libéré dès validation.
-        </p>
-        <div v-if="mission.proposedBudget" class="mt-3 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33"/>
-          </svg>
-          <span class="text-[13px] font-semibold text-ink tabular-nums">{{ Number(mission.proposedBudget).toLocaleString('fr-MA') }} DH</span>
-          <span class="text-xs text-[#9C9A92]">en attente de libération</span>
-        </div>
-      </div>
-    </div>
+    <!-- ── Liste ─────────────────────────────────────────────────── -->
+    <div v-else class="space-y-2">
+      <div v-for="mission in filteredMissions" :key="mission.id"
+           class="bg-white border border-[#EBEBE5] rounded-xl overflow-hidden
+                  hover:shadow-sm hover:border-[#D1D1CB] transition">
+        <div class="flex">
 
-    <!-- MISSIONS EN COURS -->
-    <div v-if="!loading && missions.length > 0" class="space-y-3">
-      <div v-for="mission in missions" :key="mission.id"
-           class="bg-white rounded-xl border border-[#EBEBE5] p-5">
+          <!-- Bande statut gauche -->
+          <div class="w-1 flex-shrink-0" :class="statusStripe(mission.status)"></div>
 
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 min-w-0">
-            <h2 class="text-[14px] font-semibold text-ink truncate">{{ mission.offerTitle }}</h2>
-            <p class="text-xs text-[#9C9A92] mt-0.5">
-              Acceptée le {{ formatDate(mission.createdAt) }}
-              · <span class="text-[#5F5E5A]">{{ daysElapsed(mission.createdAt) }} jours en cours</span>
-            </p>
-          </div>
-          <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-green-50 text-green-700 whitespace-nowrap flex-shrink-0">
-            En cours
-          </span>
-        </div>
+          <!-- Contenu -->
+          <div class="flex-1 min-w-0 px-5 py-4">
 
-        <div class="flex flex-wrap gap-x-6 gap-y-1.5 mt-4">
-          <div v-if="mission.proposedBudget" class="flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33"/>
-            </svg>
-            <span class="text-[13px] font-semibold text-ink tabular-nums">{{ Number(mission.proposedBudget).toLocaleString('fr-MA') }} DH</span>
-            <span class="text-xs text-[#9C9A92]">proposé</span>
-          </div>
-          <div v-if="mission.proposedDays" class="flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/>
-            </svg>
-            <span class="text-[13px] text-ink tabular-nums">{{ mission.proposedDays }} jours</span>
-            <span class="text-xs text-[#9C9A92]">délai prévu</span>
-          </div>
-          <div v-if="mission.offerCategory" class="flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/>
-            </svg>
-            <span class="text-[13px] text-[#5F5E5A]">{{ mission.offerCategory }}</span>
-          </div>
-        </div>
+            <!-- Titre + badge -->
+            <div class="flex items-start gap-4">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-ink leading-snug">
+                  {{ mission.offerTitle || 'Mission #' + mission.offerId }}
+                </p>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                  <span class="flex items-center gap-1 text-xs text-[#9C9A92]">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    {{ mission.status === 'COMPLETED'
+                        ? 'Terminée le ' + formatDate(mission.completedAt)
+                        : 'Acceptée le ' + formatDate(mission.createdAt) }}
+                  </span>
+                  <span v-if="mission.proposedBudget"
+                        class="flex items-center gap-1 text-xs font-semibold text-brand-600">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    {{ Number(mission.proposedBudget).toLocaleString('fr-MA') }} DH
+                  </span>
+                  <span v-if="mission.proposedDays && mission.status === 'ACCEPTED'"
+                        class="flex items-center gap-1 text-xs"
+                        :class="progressPercent(mission) >= 90 ? 'text-red-500' : progressPercent(mission) >= 70 ? 'text-amber-500' : 'text-[#9C9A92]'">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ daysElapsed(mission.createdAt) }} / {{ mission.proposedDays }}j
+                  </span>
+                </div>
+              </div>
 
-        <div v-if="mission.proposedDays" class="mt-4">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="text-[11px] text-[#9C9A92]">Progression (délai)</span>
-            <span class="text-[11px] font-medium tabular-nums"
-                  :class="progressPercent(mission) >= 90 ? 'text-red-500' : progressPercent(mission) >= 70 ? 'text-amber-500' : 'text-[#5F5E5A]'">
-              {{ daysElapsed(mission.createdAt) }} / {{ mission.proposedDays }} j
-            </span>
-          </div>
-          <div class="h-1 bg-[#F4F4ED] rounded-full overflow-hidden">
-            <div class="h-full rounded-full transition-all duration-500"
-                 :class="progressPercent(mission) >= 90 ? 'bg-red-400' : progressPercent(mission) >= 70 ? 'bg-amber-400' : 'bg-green-500'"
-                 :style="{ width: Math.min(progressPercent(mission), 100) + '%' }"></div>
-          </div>
-        </div>
+              <!-- Badge statut -->
+              <span class="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full"
+                    :class="statusBadge(mission.status)">
+                {{ statusLabel(mission.status) }}
+              </span>
+            </div>
 
-        <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#EBEBE5]">
-          <RouterLink to="/freelancer/messages"
-                      class="text-[12px] font-medium text-[#73726C] hover:text-ink transition flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-            </svg>
-            Contacter le client
-          </RouterLink>
+            <!-- Barre de progression (En cours uniquement) -->
+            <div v-if="mission.status === 'ACCEPTED' && mission.proposedDays" class="mt-3">
+              <div class="h-1 bg-[#F4F4ED] rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500"
+                     :class="progressPercent(mission) >= 90 ? 'bg-red-400'
+                           : progressPercent(mission) >= 70 ? 'bg-amber-400'
+                           : 'bg-brand-500'"
+                     :style="{ width: Math.min(progressPercent(mission), 100) + '%' }">
+                </div>
+              </div>
+            </div>
 
-          <button @click="completeMission(mission)"
-                  :disabled="completing === mission.id"
-                  class="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-[#EBEBE5] hover:bg-[#F4F4ED] text-[#5F5E5A] transition disabled:opacity-50">
-            <svg v-if="completing === mission.id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-            </svg>
-            {{ completing === mission.id ? 'En cours...' : 'Marquer terminé' }}
-          </button>
-        </div>
-      </div>
-    </div>
+            <!-- Bandeau validation -->
+            <div v-if="mission.status === 'AWAITING_VALIDATION'"
+                 class="mt-3 flex items-center gap-2 text-xs text-amber-700
+                        bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Le client doit valider votre travail. Le paiement sera libéré dès validation.
+            </div>
 
-    <!-- MISSIONS TERMINÉES -->
-    <div v-if="!loading && completed.length > 0" class="space-y-3">
-      <div class="flex items-center gap-3">
-        <div class="flex-1 h-px bg-[#EBEBE5]"></div>
-        <span class="text-[11px] text-[#9C9A92] font-medium">Terminées ({{ completed.length }})</span>
-        <div class="flex-1 h-px bg-[#EBEBE5]"></div>
-      </div>
-      <div v-for="mission in completed" :key="mission.id"
-           class="bg-white rounded-xl border border-[#EBEBE5] p-5 opacity-70">
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 min-w-0">
-            <h2 class="text-[14px] font-medium text-ink truncate">{{ mission.offerTitle }}</h2>
-            <p class="text-xs text-[#9C9A92] mt-0.5">
-              Terminée le {{ formatDate(mission.completedAt) }}
-            </p>
+            <!-- Actions -->
+            <div class="flex items-center gap-2 mt-3 pt-3 border-t border-[#F0F0EA]">
+
+              <RouterLink v-if="mission.status === 'ACCEPTED'"
+                          to="/freelancer/messages"
+                          class="flex items-center gap-1.5 text-xs text-[#73726C] hover:text-ink
+                                 border border-[#EBEBE5] hover:border-[#C4C3BC] bg-white
+                                 px-3 py-1.5 rounded-lg transition">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                Contacter le client
+              </RouterLink>
+
+              <button v-if="mission.status === 'COMPLETED' && !hasReview(mission.id)"
+                      @click="openReview(mission)"
+                      class="flex items-center gap-1.5 text-xs text-amber-600
+                             border border-amber-200 bg-amber-50 hover:bg-amber-100
+                             px-3 py-1.5 rounded-lg transition">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                </svg>
+                Laisser un avis
+              </button>
+
+              <button v-if="mission.status === 'ACCEPTED'"
+                      @click="completeMission(mission)"
+                      :disabled="completing === mission.id"
+                      class="ml-auto flex items-center gap-1.5 text-xs font-semibold
+                             bg-brand-500 hover:bg-brand-600 text-white
+                             px-3 py-1.5 rounded-lg transition disabled:opacity-50">
+                <svg v-if="completing === mission.id" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+                {{ completing === mission.id ? 'En cours…' : 'Marquer terminé' }}
+              </button>
+
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <button v-if="!hasReview(mission.id)"
-                    @click="openReview(mission)"
-                    class="text-[11px] font-semibold text-amber-600 border border-amber-200 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-full transition">
-              Laisser un avis
-            </button>
-            <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#F4F4ED] text-[#73726C] whitespace-nowrap flex-shrink-0">
-              Terminée
-            </span>
-          </div>
-        </div>
-        <div v-if="mission.proposedBudget" class="mt-3">
-          <span class="text-[13px] font-semibold text-ink tabular-nums">
-            {{ Number(mission.proposedBudget).toLocaleString('fr-MA') }} DH
-          </span>
         </div>
       </div>
     </div>
 
-    <!-- TOAST -->
-    <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 translate-y-2"
-                leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-2">
+    <!-- ── Toast ─────────────────────────────────────────────────── -->
+    <Transition enter-from-class="opacity-0 translate-y-2"
+                enter-active-class="transition duration-200"
+                leave-to-class="opacity-0 translate-y-2"
+                leave-active-class="transition duration-150">
       <div v-if="toast.show"
-           class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg border text-[13px] font-medium flex items-center gap-2"
-           :class="toast.type === 'success' ? 'bg-ink text-white border-transparent' : 'bg-white text-red-600 border-red-200'">
-        <svg v-if="toast.type === 'success'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-        </svg>
-        <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+           class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3
+                  rounded-xl text-sm font-medium shadow-lg"
+           :class="toast.type === 'success' ? 'bg-ink text-white' : 'bg-red-600 text-white'">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                :d="toast.type === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'"/>
         </svg>
         {{ toast.message }}
       </div>
     </Transition>
 
-    <!-- REVIEW MODAL -->
+    <!-- ── Modal avis ─────────────────────────────────────────────── -->
     <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0"
                 leave-active-class="transition duration-150" leave-to-class="opacity-0">
-      <div v-if="reviewModal.open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      <div v-if="reviewModal.open"
+           class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
            @click.self="reviewModal.open = false">
-        <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 scale-95"
-                    leave-active-class="transition duration-150" leave-to-class="opacity-0 scale-95">
-          <div v-if="reviewModal.open" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-[16px] font-bold text-ink mb-1">Évaluer le client</h3>
-            <p class="text-[13px] text-[#73726C] mb-5">
-              {{ reviewModal.mission?.offerTitle }}
-            </p>
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6" @click.stop>
+          <h3 class="text-base font-bold text-ink mb-1">Évaluer le client</h3>
+          <p class="text-sm text-[#73726C] mb-5">{{ reviewModal.mission?.offerTitle }}</p>
 
-            <!-- Stars -->
-            <div class="mb-5">
-              <p class="text-[12px] font-medium text-ink mb-2">Note (obligatoire)</p>
-              <div class="flex gap-2">
-                <button v-for="star in 5" :key="star"
-                        @click="reviewForm.rating = star"
-                        class="text-3xl transition-transform hover:scale-110 focus:outline-none">
-                  <span :class="star <= reviewForm.rating ? 'text-amber-400' : 'text-[#EBEBE5]'">★</span>
-                </button>
-              </div>
-              <p class="text-[11px] text-[#9C9A92] mt-1">
-                {{ ratingLabel(reviewForm.rating) }}
-              </p>
-            </div>
-
-            <!-- Comment -->
-            <div class="mb-5">
-              <label class="text-[12px] font-medium text-ink block mb-1.5">Commentaire (optionnel)</label>
-              <textarea v-model="reviewForm.comment" rows="3"
-                        placeholder="Décrivez votre expérience de collaboration..."
-                        class="w-full text-[13px] text-ink border border-[#EBEBE5] rounded-lg px-3 py-2.5 resize-none focus:outline-none focus:border-ink transition placeholder:text-[#9C9A92]"></textarea>
-            </div>
-
-            <div class="flex gap-3">
-              <button @click="reviewModal.open = false"
-                      class="flex-1 text-[13px] font-medium text-[#73726C] border border-[#EBEBE5] rounded-lg py-2.5 hover:bg-[#F4F4ED] transition">
-                Annuler
-              </button>
-              <button @click="submitReview"
-                      :disabled="!reviewForm.rating || submittingReview"
-                      class="flex-1 text-[13px] font-semibold bg-ink text-white rounded-lg py-2.5 hover:bg-[#1A1A18] disabled:opacity-50 transition">
-                {{ submittingReview ? 'Envoi...' : 'Envoyer l\'avis' }}
+          <!-- Étoiles -->
+          <div class="mb-5">
+            <p class="text-xs font-semibold text-ink mb-2">Note (obligatoire)</p>
+            <div class="flex gap-2">
+              <button v-for="star in 5" :key="star"
+                      @click="reviewForm.rating = star"
+                      class="text-3xl transition-transform hover:scale-110 focus:outline-none">
+                <span :class="star <= reviewForm.rating ? 'text-amber-400' : 'text-[#EBEBE5]'">★</span>
               </button>
             </div>
+            <p class="text-xs text-[#9C9A92] mt-1">{{ ratingLabel(reviewForm.rating) }}</p>
           </div>
-        </Transition>
+
+          <!-- Commentaire -->
+          <div class="mb-5">
+            <label class="text-xs font-semibold text-ink block mb-1.5">Commentaire (optionnel)</label>
+            <textarea v-model="reviewForm.comment" rows="3"
+                      placeholder="Décrivez votre expérience de collaboration..."
+                      class="w-full text-sm text-ink border border-[#EBEBE5] rounded-lg px-3 py-2.5
+                             resize-none focus:outline-none focus:border-ink transition
+                             placeholder:text-[#9C9A92]"></textarea>
+          </div>
+
+          <div class="flex gap-2">
+            <button @click="reviewModal.open = false"
+                    class="flex-1 py-2.5 text-sm font-medium border border-[#EBEBE5]
+                           hover:bg-[#F4F4ED] rounded-lg transition">
+              Annuler
+            </button>
+            <button @click="submitReview"
+                    :disabled="!reviewForm.rating || submittingReview"
+                    class="flex-1 py-2.5 text-sm font-semibold bg-ink hover:bg-[#1A1A18]
+                           text-white rounded-lg transition disabled:opacity-50">
+              {{ submittingReview ? 'Envoi…' : "Envoyer l'avis" }}
+            </button>
+          </div>
+        </div>
       </div>
     </Transition>
 
@@ -278,35 +278,107 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` } })
 
-const loading = ref(true)
-const completing = ref(null)
+const loading          = ref(true)
+const completing       = ref(null)
 const submittingReview = ref(false)
-const toast = ref({ show: false, message: '', type: 'success' })
-const applications = ref([])
-const myReviews = ref(new Set()) // set of applicationIds I've already reviewed
+const selectedStatus   = ref('ALL')
+const applications     = ref([])
+const myReviews        = ref(new Set())
+const toast            = ref({ show: false, message: '', type: 'success' })
+const reviewModal      = ref({ open: false, mission: null })
+const reviewForm       = ref({ rating: 0, comment: '' })
 
-const reviewModal = ref({ open: false, mission: null })
-const reviewForm = ref({ rating: 0, comment: '' })
+const statusFilters = [
+  {
+    value: 'ALL',                label: 'Toutes',
+    dot: 'bg-[#C4C3BC]',
+    activeBg: 'bg-ink',         activeText: 'text-white',       activeBorder: 'border-ink',
+    countBg: 'bg-white/20 text-white',
+  },
+  {
+    value: 'ACCEPTED',           label: 'En cours',
+    dot: 'bg-brand-500',
+    activeBg: 'bg-brand-50',    activeText: 'text-brand-700',   activeBorder: 'border-brand-200',
+    countBg: 'bg-brand-100 text-brand-700',
+  },
+  {
+    value: 'AWAITING_VALIDATION',label: 'En validation',
+    dot: 'bg-amber-400',
+    activeBg: 'bg-amber-50',    activeText: 'text-amber-700',   activeBorder: 'border-amber-200',
+    countBg: 'bg-amber-100 text-amber-700',
+  },
+  {
+    value: 'COMPLETED',          label: 'Terminées',
+    dot: 'bg-[#C4C3BC]',
+    activeBg: 'bg-[#F4F4ED]',   activeText: 'text-[#5F5E5A]',  activeBorder: 'border-[#EBEBE5]',
+    countBg: 'bg-[#EBEBE5] text-[#73726C]',
+  },
+]
 
-const missions = computed(() =>
-  applications.value.filter(a => a.status === 'ACCEPTED')
+const allMissions = computed(() =>
+  applications.value.filter(a =>
+    ['ACCEPTED', 'AWAITING_VALIDATION', 'COMPLETED'].includes(a.status)
+  )
 )
 
-const awaitingValidation = computed(() =>
-  applications.value.filter(a => a.status === 'AWAITING_VALIDATION')
+const filteredMissions = computed(() =>
+  selectedStatus.value === 'ALL'
+    ? allMissions.value
+    : allMissions.value.filter(a => a.status === selectedStatus.value)
 )
 
-const completed = computed(() =>
-  applications.value.filter(a => a.status === 'COMPLETED')
-    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
-)
+const getCountByStatus = (status) =>
+  status === 'ALL'
+    ? allMissions.value.length
+    : allMissions.value.filter(a => a.status === status).length
+
+const statusLabel = (s) => ({
+  ACCEPTED:            'En cours',
+  AWAITING_VALIDATION: 'En validation',
+  COMPLETED:           'Terminée',
+}[s] || s)
+
+const statusBadge = (s) => ({
+  ACCEPTED:            'bg-brand-50 text-brand-700',
+  AWAITING_VALIDATION: 'bg-amber-50 text-amber-700',
+  COMPLETED:           'bg-[#F4F4ED] text-[#5F5E5A]',
+}[s] || 'bg-[#F4F4ED] text-[#73726C]')
+
+const statusStripe = (s) => ({
+  ACCEPTED:            'bg-brand-500',
+  AWAITING_VALIDATION: 'bg-amber-400',
+  COMPLETED:           'bg-[#C4C3BC]',
+}[s] || 'bg-[#DDDDD6]')
 
 const hasReview = (applicationId) => myReviews.value.has(applicationId)
+
+const daysElapsed = (iso) => {
+  if (!iso) return 0
+  return Math.floor((Date.now() - new Date(iso)) / 86400000)
+}
+
+const progressPercent = (mission) => {
+  if (!mission.proposedDays) return 0
+  return Math.round((daysElapsed(mission.createdAt) / mission.proposedDays) * 100)
+}
+
+const formatDate = (iso) => {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  const months = ['jan', 'fév', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+}
+
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 4000)
+}
 
 const loadMissions = async () => {
   loading.value = true
@@ -350,44 +422,20 @@ const submitReview = async () => {
     await axios.post(`${API_URL}/api/reviews`, {
       applicationId: reviewModal.value.mission.id,
       rating: reviewForm.value.rating,
-      comment: reviewForm.value.comment || null
+      comment: reviewForm.value.comment || null,
     }, headers())
     myReviews.value.add(reviewModal.value.mission.id)
     reviewModal.value.open = false
     showToast('Avis envoyé, merci !')
   } catch (err) {
-    showToast(err.response?.data?.message || 'Erreur lors de l\'envoi', 'error')
+    showToast(err.response?.data?.message || "Erreur lors de l'envoi", 'error')
   } finally {
     submittingReview.value = false
   }
 }
 
-const ratingLabel = (r) => {
-  const labels = { 0: '', 1: 'Très mauvais', 2: 'Mauvais', 3: 'Correct', 4: 'Bien', 5: 'Excellent' }
-  return labels[r] || ''
-}
+const ratingLabel = (r) =>
+  ['', 'Très mauvais', 'Mauvais', 'Correct', 'Bien', 'Excellent'][r] || ''
 
-const formatDate = (iso) => {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  const months = ['jan', 'fév', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
-}
-
-const daysElapsed = (iso) => {
-  if (!iso) return 0
-  return Math.floor((Date.now() - new Date(iso)) / 86400000)
-}
-
-const progressPercent = (mission) => {
-  if (!mission.proposedDays) return 0
-  return Math.round((daysElapsed(mission.createdAt) / mission.proposedDays) * 100)
-}
-
-const showToast = (message, type = 'success') => {
-  toast.value = { show: true, message, type }
-  setTimeout(() => toast.value.show = false, 4000)
-}
-
-onMounted(() => { loadMissions() })
+onMounted(loadMissions)
 </script>

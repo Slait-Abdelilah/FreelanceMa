@@ -129,6 +129,8 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const notifications = ref([])
 const loading = ref(true)
 const activeTab = ref('all')
@@ -198,13 +200,13 @@ const typeStyle = (type) => {
   return styles[type] || styles['APPLICATION_SUBMITTED']
 }
 
-const token = () => localStorage.getItem('token')
+const token = () => localStorage.getItem('token') || sessionStorage.getItem('token')
 const headers = () => ({ Authorization: `Bearer ${token()}` })
 
 const load = async () => {
   loading.value = true
   try {
-    const { data } = await axios.get('http://localhost:8080/api/notifications', { headers: headers() })
+    const { data } = await axios.get(`${BASE}/api/notifications`, { headers: headers() })
     notifications.value = data
   } catch {
     showToast('Erreur de chargement')
@@ -216,7 +218,7 @@ const load = async () => {
 const handleClick = async (notif) => {
   if (!notif.isRead) {
     try {
-      await axios.put(`http://localhost:8080/api/notifications/${notif.id}/read`, {}, { headers: headers() })
+      await axios.put(`${BASE}/api/notifications/${notif.id}/read`, {}, { headers: headers() })
       notif.isRead = true
     } catch { /* silencieux */ }
   }
@@ -224,7 +226,7 @@ const handleClick = async (notif) => {
 
 const markAllRead = async () => {
   try {
-    await axios.put('http://localhost:8080/api/notifications/read-all', {}, { headers: headers() })
+    await axios.put(`${BASE}/api/notifications/read-all`, {}, { headers: headers() })
     notifications.value.forEach(n => { n.isRead = true })
     showToast('Toutes les notifications marquées comme lues')
   } catch {
@@ -234,7 +236,7 @@ const markAllRead = async () => {
 
 const deleteNotif = async (id) => {
   try {
-    await axios.delete(`http://localhost:8080/api/notifications/${id}`, { headers: headers() })
+    await axios.delete(`${BASE}/api/notifications/${id}`, { headers: headers() })
     notifications.value = notifications.value.filter(n => n.id !== id)
   } catch {
     showToast('Erreur lors de la suppression')

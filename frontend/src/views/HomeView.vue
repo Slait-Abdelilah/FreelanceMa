@@ -1,32 +1,5 @@
 <template>
-  <div class="min-h-screen bg-white text-ink">
-
-    <!-- ===================== NAVBAR ===================== -->
-    <nav class="border-b border-gray-100 bg-white/95 backdrop-blur sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <RouterLink to="/" class="flex items-center gap-2.5">
-          <div class="relative">
-            <svg class="w-9 h-9 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/>
-              <circle cx="12" cy="12" r="4" fill="white"/>
-            </svg>
-          </div>
-          <span class="text-xl font-bold">FreelanceMa</span>
-        </RouterLink>
-
-        <div class="hidden md:flex items-center gap-8">
-          <RouterLink to="/how-it-works" class="text-sm font-medium hover:text-brand-500 transition">Comment ça marche</RouterLink>
-          <RouterLink to="/categories" class="text-sm font-medium hover:text-brand-500 transition">Catégories</RouterLink>
-          <RouterLink to="/faq" class="text-sm font-medium hover:text-brand-500 transition">FAQ</RouterLink>
-          <a href="#pricing" class="text-sm font-medium hover:text-brand-500 transition">Tarifs</a>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <RouterLink to="/login/client" class="text-sm font-semibold hover:text-brand-500">Se connecter</RouterLink>
-          <RouterLink to="/register/client" class="bg-ink text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-brand-500 transition">Commencer gratuitement</RouterLink>
-        </div>
-      </div>
-    </nav>
+  <div class="bg-white text-ink">
 
     <!-- ===================== HERO SPECTACULAIRE ===================== -->
     <section class="relative overflow-hidden bg-cream">

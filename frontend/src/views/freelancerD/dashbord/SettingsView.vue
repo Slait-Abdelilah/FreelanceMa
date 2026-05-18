@@ -408,7 +408,7 @@ const showPwd = ref({ current: false, new: false })
 
 // ===== AXIOS HEADER =====
 const headers = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` }
 })
 
 // ===== CHARGER → GET /api/settings =====
@@ -435,7 +435,7 @@ const loadSettings = async () => {
 
   } catch (err) {
     console.error('loadSettings error:', err)
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}')
     form.value.email = user.email || ''
     form.value.role = user.role || ''
     showToast('Impossible de charger les paramètres', 'error')

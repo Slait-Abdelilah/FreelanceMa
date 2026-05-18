@@ -168,6 +168,18 @@
             Publier une offre
           </RouterLink>
 
+          <!-- messages -->
+          <RouterLink to="/client/messages"
+                      class="relative p-1.5 hover:bg-[#F4F4ED] rounded-md transition group">
+            <svg class="w-4 h-4 text-[#73726C] group-hover:text-ink transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+            <span v-if="unreadMessagesCount > 0"
+                  class="absolute top-0.5 right-0.5 w-[14px] h-[14px] bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+              {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
+            </span>
+          </RouterLink>
+
           <div class="w-px h-4 bg-[#EBEBE5] mx-0.5"></div>
 
           <!-- profil -->
@@ -234,10 +246,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import axios from 'axios'
+
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const route  = useRoute()
 const router = useRouter()
@@ -269,24 +283,25 @@ const pageTitle = computed(() => ({
   '/client/missions':     'Missions actives',
   '/client/freelancers':  'Explorer les freelancers',
   '/client/wallet':       'Wallet',
+  '/client/messages':     'Messages',
   '/client/settings':     'Paramètres',
 }[route.path] || 'Dashboard'))
 
 // ── Badges réels ────────────────────────────────────────────────────────
-const openOffersCount   = ref(null)
-const pendingAppsCount  = ref(null)
+const openOffersCount     = ref(null)
+const pendingAppsCount    = ref(null)
+const unreadMessagesCount = ref(0)
 
 const loadCounts = async () => {
-  const token = localStorage.getItem('token')
+  const token = authStore.token || localStorage.getItem('token') || sessionStorage.getItem('token')
   const h = { Authorization: `Bearer ${token}` }
   try {
-    const { data: offers } = await axios.get('http://localhost:8080/api/offers/my', { headers: h })
+    const { data: offers } = await axios.get(`${BASE}/api/offers/my`, { headers: h, _noRedirectOn403: true })
     const open = offers.filter(o => o.status === 'OPEN')
     openOffersCount.value = open.length
 
-    // total candidatures en attente sur toutes les offres ouvertes
     const appsResults = await Promise.allSettled(
-      open.map(o => axios.get(`http://localhost:8080/api/offers/${o.id}/applications`, { headers: h }))
+      open.map(o => axios.get(`${BASE}/api/offers/${o.id}/applications`, { headers: h, _noRedirectOn403: true }))
     )
     let pending = 0
     appsResults.forEach(r => {
@@ -294,6 +309,10 @@ const loadCounts = async () => {
         pending += r.value.data.filter(a => a.status === 'PENDING').length
     })
     pendingAppsCount.value = pending
+  } catch { /* silencieux */ }
+  try {
+    const { data } = await axios.get(`${BASE}/api/messages/unread-count`, { headers: h, _noRedirectOn403: true })
+    unreadMessagesCount.value = data.count || 0
   } catch { /* silencieux */ }
 }
 
@@ -319,7 +338,8 @@ const workspaceItems = computed(() => [
   { path: '/client/wallet', label: 'Wallet',
     icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18-3a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg>' },
   { path: '/client/messages', label: 'Messages',
-    icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>' },
+    icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>',
+    badge: fmt(unreadMessagesCount.value), urgent: unreadMessagesCount.value > 0 },
 ])
 
 const accountItems = [
@@ -338,6 +358,12 @@ const handleClickOutside = (e) => {
   if (profileContainer.value && !profileContainer.value.contains(e.target))
     profileOpen.value = false
 }
+
+watch(() => route.path, (path) => {
+  if (path === '/client/messages') {
+    setTimeout(() => { unreadMessagesCount.value = 0 }, 800)
+  }
+})
 
 let pollInterval = null
 onMounted(() => {

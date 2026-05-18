@@ -68,37 +68,23 @@ public class WalletService {
     }
 
     @Transactional
-    public TransactionDTO escrowHold(EscrowRequest request) {
+    public TransactionDTO escrowRelease(EscrowRequest request) {
         Wallet wallet = getOrCreateWallet(request.getUserId());
 
-        wallet.setPendingBalance(wallet.getPendingBalance().add(request.getAmount()));
+        if (request.getAmount().compareTo(wallet.getPendingBalance()) > 0) {
+            throw new AppException(
+                    "Montant à libérer (" + request.getAmount() + ") supérieur au solde en attente (" + wallet.getPendingBalance() + ")",
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        wallet.setPendingBalance(wallet.getPendingBalance().subtract(request.getAmount()));
+        wallet.setBalance(wallet.getBalance().add(request.getAmount()));
+        wallet.setTotalEarned(wallet.getTotalEarned().add(request.getAmount()));
         walletRepository.save(wallet);
 
         Transaction tx = Transaction.builder()
                 .walletId(wallet.getId())
                 .amount(request.getAmount())
-                .type(TransactionType.ESCROW_HOLD)
-                .status(TransactionStatus.COMPLETED)
-                .description(request.getDescription())
-                .missionId(request.getMissionId())
-                .build();
-
-        return toTransactionDTO(transactionRepository.save(tx));
-    }
-
-    @Transactional
-    public TransactionDTO escrowRelease(EscrowRequest request) {
-        Wallet wallet = getOrCreateWallet(request.getUserId());
-
-        BigDecimal release = request.getAmount().min(wallet.getPendingBalance());
-        wallet.setPendingBalance(wallet.getPendingBalance().subtract(release));
-        wallet.setBalance(wallet.getBalance().add(release));
-        wallet.setTotalEarned(wallet.getTotalEarned().add(release));
-        walletRepository.save(wallet);
-
-        Transaction tx = Transaction.builder()
-                .walletId(wallet.getId())
-                .amount(release)
                 .type(TransactionType.ESCROW_RELEASE)
                 .status(TransactionStatus.COMPLETED)
                 .description(request.getDescription())
@@ -158,13 +144,18 @@ public class WalletService {
     public TransactionDTO clientEscrowRelease(EscrowRequest request) {
         Wallet wallet = getOrCreateWallet(request.getUserId());
 
-        BigDecimal release = request.getAmount().min(wallet.getPendingBalance());
-        wallet.setPendingBalance(wallet.getPendingBalance().subtract(release));
+        if (request.getAmount().compareTo(wallet.getPendingBalance()) > 0) {
+            throw new AppException(
+                    "Montant à libérer (" + request.getAmount() + ") supérieur au solde bloqué (" + wallet.getPendingBalance() + ")",
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        wallet.setPendingBalance(wallet.getPendingBalance().subtract(request.getAmount()));
         walletRepository.save(wallet);
 
         Transaction tx = Transaction.builder()
                 .walletId(wallet.getId())
-                .amount(release.negate())
+                .amount(request.getAmount().negate())
                 .type(TransactionType.ESCROW_RELEASE)
                 .status(TransactionStatus.COMPLETED)
                 .description(request.getDescription())

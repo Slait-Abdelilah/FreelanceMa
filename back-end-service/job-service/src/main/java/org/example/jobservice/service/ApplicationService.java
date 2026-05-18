@@ -174,34 +174,30 @@ public class ApplicationService {
             throw new ConflictException("Cette mission n'est pas en attente de validation");
         }
 
+        // Release client escrow + credit freelancer — must succeed before marking COMPLETED
+        if (app.getProposedBudget() != null) {
+            walletClient.clientEscrowRelease(new EscrowRequest(
+                    clientId,
+                    app.getProposedBudget(),
+                    app.getId(),
+                    "Mission validée — paiement libéré pour « " + offer.getTitle() + " »"
+            ));
+            walletClient.freelancerDirectCredit(new EscrowRequest(
+                    app.getFreelancerId(),
+                    app.getProposedBudget(),
+                    app.getId(),
+                    "Paiement reçu pour « " + offer.getTitle() + " »"
+            ));
+        }
+
         app.setStatus(ApplicationStatus.COMPLETED);
         applicationRepository.save(app);
 
-        // Release client escrow + credit freelancer directly
-        if (app.getProposedBudget() != null) {
-            try {
-                walletClient.clientEscrowRelease(new EscrowRequest(
-                        clientId,
-                        app.getProposedBudget(),
-                        app.getId(),
-                        "Mission validée — paiement libéré pour « " + offer.getTitle() + " »"
-                ));
-                walletClient.freelancerDirectCredit(new EscrowRequest(
-                        app.getFreelancerId(),
-                        app.getProposedBudget(),
-                        app.getId(),
-                        "Paiement reçu pour « " + offer.getTitle() + " »"
-                ));
-            } catch (Exception e) {
-                log.warn("Wallet payment failed for application {}: {}", applicationId, e.getMessage());
-            }
-        }
-
-        // Increment freelancer completed missions
+        // Increment freelancer completed missions (non-blocking — stat only)
         try {
             profileClient.incrementCompletedMissions(app.getFreelancerId());
         } catch (Exception e) {
-            log.warn("Profile update failed for freelancer {}: {}", app.getFreelancerId(), e.getMessage());
+            log.warn("Mise à jour stat missions échouée pour freelancer {} : {}", app.getFreelancerId(), e.getMessage());
         }
 
         // Notify freelancer
@@ -279,7 +275,7 @@ public class ApplicationService {
         if (app.getStatus() != ApplicationStatus.PENDING)
             throw new ConflictException("Seules les candidatures en attente peuvent être acceptées");
 
-        // Block client funds in escrow — propagates if insufficient balance
+        // Block client funds in escrow — must succeed before accepting
         if (app.getProposedBudget() != null) {
             try {
                 walletClient.clientEscrowHold(new EscrowRequest(
@@ -291,7 +287,8 @@ public class ApplicationService {
             } catch (feign.FeignException.BadRequest e) {
                 throw new ConflictException("Solde insuffisant pour accepter cette candidature. Rechargez votre wallet.");
             } catch (Exception e) {
-                log.warn("Client escrow hold failed for application {} (service unavailable): {}", applicationId, e.getMessage());
+                log.error("Échec du blocage escrow pour la candidature {} : {}", applicationId, e.getMessage());
+                throw new ConflictException("Service de paiement indisponible. Impossible d'accepter la candidature pour l'instant. Réessayez dans quelques secondes.");
             }
         }
 

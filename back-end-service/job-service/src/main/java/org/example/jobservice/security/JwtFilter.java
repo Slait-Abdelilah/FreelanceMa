@@ -39,28 +39,34 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         try {
-            if (jwtUtil.isTokenValid(token)) {
-                String email = jwtUtil.extractEmail(token);
-                String role = jwtUtil.extractRole(token);
-                Long userId = jwtUtil.extractUserId(token);
-
-                log.debug("[JwtFilter] token valide — email={} role={} userId={}", email, role, userId);
-
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                email,
-                                token,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                        );
-                auth.setDetails(userId);
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            } else {
-                log.warn("[JwtFilter] token invalide (isTokenValid=false)");
-                SecurityContextHolder.clearContext();
+            if (!jwtUtil.isTokenValid(token)) {
+                log.warn("[JwtFilter] token invalide (isTokenValid=false) sur {} {}", request.getMethod(), request.getRequestURI());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"message\":\"Token invalide ou expiré\"}");
+                return;
             }
+
+            String email = jwtUtil.extractEmail(token);
+            String role = jwtUtil.extractRole(token);
+            Long userId = jwtUtil.extractUserId(token);
+
+            log.debug("[JwtFilter] token valide — email={} role={} userId={}", email, role, userId);
+
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(
+                            email,
+                            token,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                    );
+            auth.setDetails(userId);
+            SecurityContextHolder.getContext().setAuthentication(auth);
         } catch (Exception e) {
             log.error("[JwtFilter] erreur validation token : {}", e.getMessage());
-            SecurityContextHolder.clearContext();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"message\":\"Token invalide ou expiré\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);

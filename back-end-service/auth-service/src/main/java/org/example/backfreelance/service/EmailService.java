@@ -20,7 +20,7 @@ public class EmailService {
     private String frontendUrl;
 
     public void sendVerificationEmail(String toEmail, String token) {
-        String link = frontendUrl + "/verify-email?token=" + token;
+        String link = frontendUrl + "/verify-email/" + token;
 
         String html = """
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

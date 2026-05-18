@@ -165,6 +165,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const route = useRoute()
 
 const offers       = ref([])
@@ -192,13 +194,13 @@ const filteredApps   = computed(() => {
   return applications.value.filter(a => a.status === appTab.value)
 })
 
-const token   = () => localStorage.getItem('token')
+const token   = () => localStorage.getItem('token') || sessionStorage.getItem('token')
 const headers = () => ({ Authorization: `Bearer ${token()}` })
 
 const loadOffers = async () => {
   loadingOffers.value = true
   try {
-    const { data } = await axios.get('http://localhost:8080/api/offers/my', { headers: headers() })
+    const { data } = await axios.get(`${BASE}/api/offers/my`, { headers: headers() })
     offers.value = data
     // auto-select from query param
     const qId = route.query.offer ? Number(route.query.offer) : null
@@ -213,7 +215,7 @@ const selectOffer = async (offer) => {
   appTab.value = 'all'
   expanded.value = new Set()
   try {
-    const { data } = await axios.get(`http://localhost:8080/api/offers/${offer.id}/applications`, { headers: headers() })
+    const { data } = await axios.get(`${BASE}/api/offers/${offer.id}/applications`, { headers: headers() })
     applications.value = data
   } finally { loadingApps.value = false }
 }
@@ -227,7 +229,7 @@ const toggleExpand = (id) => {
 const doAccept = async (app) => {
   actionId.value = app.id
   try {
-    const { data } = await axios.put(`http://localhost:8080/api/applications/${app.id}/accept`, {}, { headers: headers() })
+    const { data } = await axios.put(`${BASE}/api/applications/${app.id}/accept`, {}, { headers: headers() })
     const idx = applications.value.findIndex(a => a.id === data.id)
     if (idx !== -1) applications.value[idx] = data
     showToast('Candidature acceptée')
@@ -238,7 +240,7 @@ const doAccept = async (app) => {
 const doReject = async (app) => {
   actionId.value = app.id
   try {
-    const { data } = await axios.put(`http://localhost:8080/api/applications/${app.id}/reject`, {}, { headers: headers() })
+    const { data } = await axios.put(`${BASE}/api/applications/${app.id}/reject`, {}, { headers: headers() })
     const idx = applications.value.findIndex(a => a.id === data.id)
     if (idx !== -1) applications.value[idx] = data
     showToast('Candidature refusée')

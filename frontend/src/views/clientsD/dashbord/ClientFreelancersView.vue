@@ -586,7 +586,7 @@ const levels = [
   { value: 'EXPERT',  label: 'Expert',        activeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
 ]
 
-const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` } })
 
 const load = async (q = '') => {
   loading.value = true

@@ -274,7 +274,7 @@ const skillTags = computed(() =>
   (form.value.skills || '').split(',').map(s => s.trim()).filter(Boolean)
 )
 
-const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` } })
 
 const loadProfile = async () => {
   loading.value = true

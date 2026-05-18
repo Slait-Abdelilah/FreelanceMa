@@ -32,6 +32,11 @@ public class UserProfile {
     @Builder.Default private Boolean showOnlineStatus = true;
     @Builder.Default private Boolean publicProfile    = true;
 
+    // ── Profil Client ─────────────────────────────────────────────────────
+    private String     companyName;
+    private String     website;
+    private String     sector;
+
     // ── Profil Freelancer (null pour les clients) ─────────────────────────
     private String     title;
     private String     bio;

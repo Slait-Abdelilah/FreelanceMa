@@ -58,8 +58,9 @@ axios.interceptors.response.use(
       try {
         const resp = await axios.post(`${BASE}/api/auth/refresh`, { refreshToken: storedRefreshToken })
         const { token: newToken, refreshToken: newRefreshToken, email, role } = resp.data
+        const rememberMe = !!localStorage.getItem('token') // conserver le type de stockage d'origine
 
-        authStore.setAuth(newToken, { email, role }, newRefreshToken)
+        authStore.setAuth(newToken, { email, role }, newRefreshToken, rememberMe)
         processQueue(null, newToken)
 
         originalRequest.headers['Authorization'] = `Bearer ${newToken}`
@@ -77,7 +78,8 @@ axios.interceptors.response.use(
     }
 
     // 403 = accès interdit (rôle insuffisant)
-    if (status === 403) {
+    // Les requêtes avec _noRedirectOn403:true gèrent l'erreur localement
+    if (status === 403 && !originalRequest._noRedirectOn403) {
       const { useAuthStore: useStore } = await import('./stores/authStore')
       const store = useStore()
       const role = store.userRole

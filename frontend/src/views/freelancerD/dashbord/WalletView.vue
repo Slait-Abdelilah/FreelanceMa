@@ -256,7 +256,7 @@ const filteredTransactions = computed(() => {
   return transactions.value.filter(t => t.type === selectedFilter.value)
 })
 
-const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` } })
 
 const loadWallet = async () => {
   loading.value = true

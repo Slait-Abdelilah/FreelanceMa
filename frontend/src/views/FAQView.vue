@@ -1,27 +1,5 @@
 <template>
-  <div class="min-h-screen bg-white text-ink">
-
-    <!-- ============ NAVBAR ============ -->
-    <nav class="border-b border-gray-100 bg-white/95 backdrop-blur sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <RouterLink to="/" class="flex items-center gap-2.5">
-          <svg class="w-9 h-9 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="12" cy="12" r="4" fill="white"/>
-          </svg>
-          <span class="text-xl font-bold">FreelanceMa</span>
-        </RouterLink>
-        <div class="hidden md:flex items-center gap-8">
-          <RouterLink to="/how-it-works" class="text-sm font-medium hover:text-brand-500 transition">Comment ça marche</RouterLink>
-          <RouterLink to="/categories" class="text-sm font-medium hover:text-brand-500 transition">Catégories</RouterLink>
-          <RouterLink to="/faq" class="text-sm font-medium text-brand-500">FAQ</RouterLink>
-        </div>
-        <div class="flex items-center gap-3">
-          <RouterLink to="/login/client" class="text-sm font-semibold hover:text-brand-500">Se connecter</RouterLink>
-          <RouterLink to="/register/client" class="bg-ink text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-brand-500 transition">Commencer</RouterLink>
-        </div>
-      </div>
-    </nav>
+  <div class="bg-white text-ink">
 
     <!-- ============ HERO ============ -->
     <section class="bg-cream py-24 relative overflow-hidden">
@@ -182,30 +160,14 @@
       </div>
     </section>
 
-    <!-- ============ FOOTER ============ -->
-    <footer class="bg-ink text-white py-12 border-t border-white/10">
-      <div class="max-w-7xl mx-auto px-6 flex items-center justify-between flex-wrap gap-6">
-        <div class="flex items-center gap-2">
-          <svg class="w-8 h-8 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="12" cy="12" r="4" fill="#001E00"/>
-          </svg>
-          <span class="font-bold">FreelanceMa</span>
-        </div>
-        <div class="flex gap-6 text-sm text-gray-400">
-          <RouterLink to="/how-it-works" class="hover:text-white">Comment ça marche</RouterLink>
-          <RouterLink to="/categories" class="hover:text-white">Catégories</RouterLink>
-          <RouterLink to="/faq" class="hover:text-white">FAQ</RouterLink>
-        </div>
-        <div class="text-sm text-gray-400">© 2025 FreelanceMa</div>
-      </div>
-    </footer>
+    <PublicFooter />
 
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import PublicFooter from '@/components/layout/PublicFooter.vue'
 
 const search = ref('')
 const activeCategory = ref('all')

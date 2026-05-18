@@ -1,200 +1,169 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// ===== PAGES PUBLIQUES =====
-import HomeView from '../views/HomeView.vue'
-import HowItWorksView from '../views/HowItWorksView.vue'
-import CategoriesView from '../views/CategoriesView.vue'
-import FAQView from '../views/FAQView.vue'
-
-// ===== AUTH =====
-import ForgotPasswordView from '@/views/ForgotPasswordView.vue'
-import ResetPasswordView from '@/views/ResetPasswordView.vue'
-import VerifyAccountView from '@/views/VerifyAccountView.vue'
-
-// ===== CLIENT =====
-import RegisterClientView from '@/views/ClientLog/RegisterClientView.vue'
-import LoginClientView from '@/views/ClientLog/LoginClientView.vue'
-
-// ===== FREELANCER AUTH =====
-import RegisterFreelancerView from '@/views/freelancerLog/RegisterFreelancerView.vue'
-import LoginFreelancerView from '@/views/freelancerLog/LoginFreelancerView.vue'
-import OnboardingFreelancerView from '@/views/freelancerLog/OnboardingFreelancerView.vue'
-// ===== CLIENT DASHBOARD =====
-import ClientDashboardLayout from '@/views/clientsD/dashbord/ClientDashboardLayout.vue'
-import ClientHomeView from '@/views/clientsD/dashbord/ClientHomeView.vue'
-import ClientOffersView from '@/views/clientsD/dashbord/ClientOffersView.vue'
-import ClientApplicationsView from '@/views/clientsD/dashbord/ClientApplicationsView.vue'
-import ClientMissionsView from '@/views/clientsD/dashbord/ClientMissionsView.vue'
-import ClientSettingsView from '@/views/clientsD/dashbord/ClientSettingsView.vue'
-import ClientFreelancersView from '@/views/clientsD/dashbord/ClientFreelancersView.vue'
-import ClientWalletView from '@/views/clientsD/dashbord/ClientWalletView.vue'
-// ===== FREELANCER DASHBOARD =====
-import FreelancerDashboardLayout from '@/views/freelancerD/dashbord/FreelancerDashboardLayout.vue'
-import FreelancerHomeView from '@/views/freelancerD/dashbord/HomeView.vue'
-import SettingsView from '@/views/freelancerD/dashbord/SettingsView.vue'
-import ProfileView from '@/views/freelancerD/dashbord/ProfileView.vue'
-import PortfolioView from '@/views/freelancerD/dashbord/PortfolioView.vue'
-import ComingSoonView from '@/views/freelancerD/dashbord/ComingSoonView.vue'
-import WalletView from '@/views/freelancerD/dashbord/WalletView.vue'
-import ExploreMissionsView from '@/views/freelancerD/dashbord/ExploreMissionsView.vue'
-import ApplicationsView from '@/views/freelancerD/dashbord/ApplicationsView.vue'
-import ActiveMissionsView from '@/views/freelancerD/dashbord/ActiveMissionsView.vue'
-import FavoritesView from '@/views/freelancerD/dashbord/FavoritesView.vue'
-import NotificationsView from '@/views/freelancerD/dashbord/NotificationsView.vue'
-import MessagesView from '@/views/MessagesView.vue'
-
-
-
 // ===== HELPERS =====
 const getUser = () => {
-    try {
-        return JSON.parse(localStorage.getItem('user') || '{}')
-    } catch {
-        return {}
-    }
+  try {
+    const raw = localStorage.getItem('user') || sessionStorage.getItem('user') || '{}'
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
 }
 
-// Vérifie si le JWT est expiré en décodant son payload (aucune lib nécessaire)
+const getToken = () =>
+  localStorage.getItem('token') || sessionStorage.getItem('token') || null
+
 const isTokenExpired = (token) => {
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        return payload.exp * 1000 < Date.now()
-    } catch {
-        return true // token malformé → traité comme expiré
-    }
-}
-const routes = [
-    // ===== PAGES PUBLIQUES =====
-    { path: '/', component: HomeView },
-    { path: '/how-it-works', component: HowItWorksView },
-    { path: '/categories', component: CategoriesView },
-    { path: '/faq', component: FAQView },
-    // ===== AUTH =====
-    { path: '/forgot-password', component: ForgotPasswordView },
-    { path: '/reset-password', component: ResetPasswordView },
-    { path: '/verify-account', component: VerifyAccountView },
-
-    // ===== CLIENT =====
-    {
-        path: '/register/client',
-        component: RegisterClientView,
-        meta: { guestOnly: true }
-    },
-    {
-        path: '/login/client',
-        component: LoginClientView,
-        meta: { guestOnly: true }
-    },
-
-    // ===== FREELANCER AUTH =====
-    {
-        path: '/register/freelancer',
-        component: RegisterFreelancerView,
-        meta: { guestOnly: true }
-    },
-    {
-        path: '/login/freelancer',
-        component: LoginFreelancerView,
-        meta: { guestOnly: true }
-    },
-    {
-        path: '/onboarding/freelancer',
-        component: OnboardingFreelancerView,
-        meta: { requiresAuth: true, requiredRole: 'FREELANCER' }
-    },
-    // ===== CLIENT DASHBOARD =====
-    {
-        path: '/client',
-        component: ClientDashboardLayout,
-        meta: { requiresAuth: true, requiredRole: 'CLIENT' },
-        children: [
-            { path: '', redirect: '/client/dashboard' },
-            { path: 'dashboard', component: ClientHomeView },
-            { path: 'offers', component: ClientOffersView },
-            { path: 'applications', component: ClientApplicationsView },
-            { path: 'missions', component: ClientMissionsView },
-            { path: 'freelancers', component: ClientFreelancersView },
-            { path: 'wallet', component: ClientWalletView },
-            { path: 'messages', component: MessagesView },
-            { path: 'settings', component: ClientSettingsView },
-        ]
-    },
-    // ===== FREELANCER DASHBOARD =====
-    {
-        path: '/freelancer',
-        component: FreelancerDashboardLayout,
-        meta: { requiresAuth: true, requiredRole: 'FREELANCER' },
-        children: [
-            { path: '', redirect: '/freelancer/dashboard' },
-            { path: 'dashboard', component: FreelancerHomeView },
-            { path: 'settings', component: SettingsView },
-            { path: 'profile', component: ProfileView },
-            { path: 'portfolio', component: PortfolioView },
-            { path: 'explore', component: ExploreMissionsView },
-            { path: 'applications', component: ApplicationsView },
-            { path: 'active-missions', component: ActiveMissionsView },
-            { path: 'favorites', component: FavoritesView },
-            { path: 'messages', component: MessagesView },
-            { path: 'notifications', component: NotificationsView },
-            { path: 'wallet', component: WalletView },
-            { path: 'help', component: ComingSoonView },
-
-        ]
-    },
-    // ===== 404 =====
-    { path: '/:pathMatch(.*)*', redirect: '/' },
-]
-const router = createRouter({
-    history: createWebHistory(),
-    routes
-})
-// ===== NAVIGATION GUARD =====
-router.beforeEach((to, from) => {
-    const token = localStorage.getItem('token')
-    const user = getUser()
-
-    // Si le token est expiré
-    if (token && isTokenExpired(token)) {
-        const refreshToken = localStorage.getItem('refreshToken')
-        if (refreshToken) {
-            // Refresh token présent → laisser passer, l'intercepteur Axios renouvellera silencieusement
-            return true
-        }
-        // Aucun refresh token → déconnexion immédiate
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        if (to.meta.requiresAuth) {
-            return user.role === 'CLIENT' ? '/login/client' : '/login/freelancer'
-        }
-        return true
-    }
-
-    const isAuthenticated = !!token && !!user.role
-    const userRole = user.role
-
-    // ===== CAS 1 : route nécessite d'être connecté =====
-    if (to.meta.requiresAuth) {
-        if (!isAuthenticated) {
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
-            localStorage.removeItem('refreshToken')
-            return userRole === 'CLIENT' ? '/login/client' : '/login/freelancer'
-        }
-        // mauvais rôle → rediriger vers son propre dashboard
-        if (to.meta.requiredRole && userRole !== to.meta.requiredRole) {
-            if (userRole === 'CLIENT') return '/client/dashboard'
-            if (userRole === 'FREELANCER') return '/freelancer/dashboard'
-            return '/'
-        }
-    }
-
-    // ===== CAS 2 : page réservée aux invités =====
-    if (to.meta.guestOnly && isAuthenticated) {
-        if (userRole === 'CLIENT') return '/client/dashboard'
-        if (userRole === 'FREELANCER') return '/freelancer/dashboard'
-    }
-
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp * 1000 < Date.now()
+  } catch {
     return true
+  }
+}
+
+const routes = [
+  // ===== PAGES PUBLIQUES (avec NavBar + PublicFooter) =====
+  {
+    path: '/',
+    component: () => import('@/layouts/PublicLayout.vue'),
+    children: [
+      { path: '', component: () => import('@/views/HomeView.vue'), meta: { showPricing: true } },
+      { path: 'how-it-works', component: () => import('@/views/HowItWorksView.vue') },
+      { path: 'categories', component: () => import('@/views/CategoriesView.vue') },
+      { path: 'faq', component: () => import('@/views/FAQView.vue') },
+    ],
+  },
+
+  // ===== AUTH =====
+  { path: '/forgot-password', component: () => import('@/views/ForgotPasswordView.vue') },
+  { path: '/reset-password', component: () => import('@/views/ResetPasswordView.vue') },
+  { path: '/verify-account', component: () => import('@/views/VerifyAccountView.vue') },
+
+  // ===== CLIENT AUTH =====
+  {
+    path: '/register/client',
+    component: () => import('@/views/ClientLog/RegisterClientView.vue'),
+    meta: { guestOnly: true },
+  },
+  {
+    path: '/login/client',
+    component: () => import('@/views/ClientLog/LoginClientView.vue'),
+    meta: { guestOnly: true },
+  },
+
+  // ===== FREELANCER AUTH =====
+  {
+    path: '/register/freelancer',
+    component: () => import('@/views/freelancerLog/RegisterFreelancerView.vue'),
+    meta: { guestOnly: true },
+  },
+  {
+    path: '/login/freelancer',
+    component: () => import('@/views/freelancerLog/LoginFreelancerView.vue'),
+    meta: { guestOnly: true },
+  },
+  {
+    path: '/onboarding/freelancer',
+    component: () => import('@/views/freelancerLog/OnboardingFreelancerView.vue'),
+    meta: { requiresAuth: true, requiredRole: 'FREELANCER' },
+  },
+
+  // ===== CLIENT DASHBOARD =====
+  {
+    path: '/client',
+    component: () => import('@/views/clientsD/dashbord/ClientDashboardLayout.vue'),
+    meta: { requiresAuth: true, requiredRole: 'CLIENT' },
+    children: [
+      { path: '', redirect: '/client/dashboard' },
+      { path: 'dashboard', component: () => import('@/views/clientsD/dashbord/ClientHomeView.vue') },
+      { path: 'offers', component: () => import('@/views/clientsD/dashbord/ClientOffersView.vue') },
+      { path: 'applications', component: () => import('@/views/clientsD/dashbord/ClientApplicationsView.vue') },
+      { path: 'missions', component: () => import('@/views/clientsD/dashbord/ClientMissionsView.vue') },
+      { path: 'freelancers', component: () => import('@/views/clientsD/dashbord/ClientFreelancersView.vue') },
+      { path: 'wallet', component: () => import('@/views/clientsD/dashbord/ClientWalletView.vue') },
+      { path: 'messages', component: () => import('@/views/MessagesView.vue') },
+      { path: 'settings', component: () => import('@/views/clientsD/dashbord/ClientSettingsView.vue') },
+    ],
+  },
+
+  // ===== FREELANCER DASHBOARD =====
+  {
+    path: '/freelancer',
+    component: () => import('@/views/freelancerD/dashbord/FreelancerDashboardLayout.vue'),
+    meta: { requiresAuth: true, requiredRole: 'FREELANCER' },
+    children: [
+      { path: '', redirect: '/freelancer/dashboard' },
+      { path: 'dashboard', component: () => import('@/views/freelancerD/dashbord/HomeView.vue') },
+      { path: 'settings', component: () => import('@/views/freelancerD/dashbord/SettingsView.vue') },
+      { path: 'profile', component: () => import('@/views/freelancerD/dashbord/ProfileView.vue') },
+      { path: 'portfolio', component: () => import('@/views/freelancerD/dashbord/PortfolioView.vue') },
+      { path: 'explore', component: () => import('@/views/freelancerD/dashbord/ExploreMissionsView.vue') },
+      { path: 'applications', component: () => import('@/views/freelancerD/dashbord/ApplicationsView.vue') },
+      { path: 'active-missions', component: () => import('@/views/freelancerD/dashbord/ActiveMissionsView.vue') },
+      { path: 'favorites', component: () => import('@/views/freelancerD/dashbord/FavoritesView.vue') },
+      { path: 'messages', component: () => import('@/views/MessagesView.vue') },
+      { path: 'notifications', component: () => import('@/views/freelancerD/dashbord/NotificationsView.vue') },
+      { path: 'wallet', component: () => import('@/views/freelancerD/dashbord/WalletView.vue') },
+      { path: 'help', component: () => import('@/views/freelancerD/dashbord/ComingSoonView.vue') },
+    ],
+  },
+
+  // ===== 404 =====
+  { path: '/:pathMatch(.*)*', component: () => import('@/views/NotFoundView.vue') },
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+})
+
+// ===== NAVIGATION GUARD =====
+router.beforeEach((to) => {
+  const token = getToken()
+  const user = getUser()
+
+  if (token && isTokenExpired(token)) {
+    const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken')
+    if (refreshToken) {
+      return true
+    }
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('user')
+    if (to.meta.requiresAuth) {
+      return user.role === 'CLIENT' ? '/login/client' : '/login/freelancer'
+    }
+    return true
+  }
+
+  const isAuthenticated = !!token && !!user.role
+  const userRole = user.role
+
+  if (to.meta.requiresAuth) {
+    if (!isAuthenticated) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('refreshToken')
+      sessionStorage.removeItem('token')
+      sessionStorage.removeItem('user')
+      sessionStorage.removeItem('refreshToken')
+      return userRole === 'CLIENT' ? '/login/client' : '/login/freelancer'
+    }
+    if (to.meta.requiredRole && userRole !== to.meta.requiredRole) {
+      if (userRole === 'CLIENT') return '/client/dashboard'
+      if (userRole === 'FREELANCER') return '/freelancer/dashboard'
+      return '/'
+    }
+  }
+
+  if (to.meta.guestOnly && isAuthenticated) {
+    if (userRole === 'CLIENT') return '/client/dashboard'
+    if (userRole === 'FREELANCER') return '/freelancer/dashboard'
+  }
+
+  return true
 })
 
 export default router

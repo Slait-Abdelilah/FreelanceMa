@@ -158,14 +158,14 @@
 
           <!-- liens bas -->
           <div class="mt-6 pt-6 border-t border-gray-200 flex items-center justify-between text-sm">
-            <RouterLink to="/login/client"
+            <RouterLink :to="loginPath"
                         class="text-ink-soft hover:text-ink flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
               </svg>
               Connexion
             </RouterLink>
-            <RouterLink to="/register/client"
+            <RouterLink :to="registerPath"
                         class="text-brand-500 font-semibold hover:underline">
               Modifier l'email
             </RouterLink>
@@ -182,8 +182,8 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
+import { verifyAccount, resendCode as resendCodeApi } from '@/api/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -199,10 +199,11 @@ const verifiedRole = ref('')   // rôle de l'utilisateur après vérification
 const resendCountdown = ref(60)
 let countdownInterval = null
 
-// code complet ?
-const isCodeComplete = computed(() => {
-  return codeDigits.value.every(d => d !== '')
-})
+const isFreelancer = computed(() => route.query.from === 'freelancer')
+const loginPath = computed(() => isFreelancer.value ? '/login/freelancer' : '/login/client')
+const registerPath = computed(() => isFreelancer.value ? '/register/freelancer' : '/register/client')
+
+const isCodeComplete = computed(() => codeDigits.value.every(d => d !== ''))
 
 // ============ AU CHARGEMENT ============
 onMounted(async () => {
@@ -210,9 +211,9 @@ onMounted(async () => {
   // récupérer l'email depuis l'URL
   email.value = route.query.email || ''
 
-  // si pas d'email → retour inscription
+  // si pas d'email → retour inscription selon le flux d'origine
   if (!email.value) {
-    router.push('/register/client')
+    router.push(route.query.from === 'freelancer' ? '/register/freelancer' : '/register/client')
     return
   }
 
@@ -297,13 +298,7 @@ const verifyCode = async () => {
   loading.value = true
 
   try {
-    // appel backend
-    const response = await axios.post(
-        'http://localhost:8080/api/auth/verify-account',
-        { email: email.value, code: code }
-    )
-
-    // le backend renvoie un token JWT → connexion automatique
+    const response = await verifyAccount(email.value, code)
     const { token, refreshToken, email: userEmail, role } = response.data
     authStore.setAuth(token, { email: userEmail, role }, refreshToken)
 
@@ -341,9 +336,7 @@ const resendCode = async () => {
   errorMessage.value = ''
 
   try {
-    await axios.post('http://localhost:8080/api/auth/resend-code', {
-      email: email.value
-    })
+    await resendCodeApi(email.value)
 
     // redémarrer le countdown
     startCountdown()

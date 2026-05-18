@@ -504,7 +504,7 @@ const completionScore = computed(() => {
 
 // ===== HELPERS =====
 const getTechTags = (t) => t ? t.split(',').map(s => s.trim()).filter(s => s.length > 0) : []
-const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` } })
 
 const showToast = (message, type = 'success') => {
   toast.value = { show: true, message, type }

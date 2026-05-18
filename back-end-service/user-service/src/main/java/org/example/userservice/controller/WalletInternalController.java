@@ -14,26 +14,19 @@ public class WalletInternalController {
 
     private final WalletService walletService;
 
-    @PostMapping("/escrow-hold")
-    public ResponseEntity<TransactionDTO> escrowHold(@RequestBody EscrowRequest request) {
-        return ResponseEntity.ok(walletService.escrowHold(request));
-    }
-
-    @PostMapping("/escrow-release")
-    public ResponseEntity<TransactionDTO> escrowRelease(@RequestBody EscrowRequest request) {
-        return ResponseEntity.ok(walletService.escrowRelease(request));
-    }
-
+    // Appelé quand le client accepte une candidature : déduit de son solde et bloque en pending
     @PostMapping("/client-hold")
     public ResponseEntity<TransactionDTO> clientHold(@RequestBody EscrowRequest request) {
         return ResponseEntity.ok(walletService.clientEscrowHold(request));
     }
 
+    // Appelé quand la mission est validée : libère le pending du client
     @PostMapping("/client-release")
     public ResponseEntity<TransactionDTO> clientRelease(@RequestBody EscrowRequest request) {
         return ResponseEntity.ok(walletService.clientEscrowRelease(request));
     }
 
+    // Appelé quand la mission est validée : crédite directement le solde du freelancer
     @PostMapping("/direct-credit")
     public ResponseEntity<TransactionDTO> directCredit(@RequestBody EscrowRequest request) {
         return ResponseEntity.ok(walletService.directCredit(request));

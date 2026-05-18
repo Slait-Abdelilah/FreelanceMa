@@ -218,6 +218,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import axios from 'axios'
 
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const router    = useRouter()
 const authStore = useAuthStore()
 
@@ -235,13 +237,13 @@ const accountForm = ref({ phone: '', language: 'fr', currency: 'MAD' })
 const privacyForm = ref({ showOnlineStatus: true, publicProfile: true })
 const passwordForm = ref({ currentPassword: '', newPassword: '', confirmPassword: '' })
 
-const token   = () => localStorage.getItem('token')
+const token   = () => localStorage.getItem('token') || sessionStorage.getItem('token')
 const headers = () => ({ Authorization: `Bearer ${token()}` })
 
 const loadSettings = async () => {
   loadingSettings.value = true
   try {
-    const { data } = await axios.get('http://localhost:8080/api/settings', { headers: headers() })
+    const { data } = await axios.get(`${BASE}/api/settings`, { headers: headers() })
     settings.value = data
     accountForm.value.phone    = data.phone || ''
     accountForm.value.language = data.language || 'fr'
@@ -254,7 +256,7 @@ const loadSettings = async () => {
 const saveAccount = async () => {
   savingAccount.value = true
   try {
-    await axios.put('http://localhost:8080/api/settings/account', accountForm.value, { headers: headers() })
+    await axios.put(`${BASE}/api/settings/account`, accountForm.value, { headers: headers() })
     showToast('Informations mises à jour')
   } catch (e) { showToast(e.response?.data?.message || 'Erreur lors de la mise à jour', 'error')
   } finally { savingAccount.value = false }
@@ -263,7 +265,7 @@ const saveAccount = async () => {
 const savePrivacy = async () => {
   savingPrivacy.value = true
   try {
-    await axios.put('http://localhost:8080/api/settings/privacy', privacyForm.value, { headers: headers() })
+    await axios.put(`${BASE}/api/settings/privacy`, privacyForm.value, { headers: headers() })
     showToast('Préférences de confidentialité sauvegardées')
   } catch (e) { showToast(e.response?.data?.message || 'Erreur lors de la mise à jour', 'error')
   } finally { savingPrivacy.value = false }
@@ -281,7 +283,7 @@ const changePassword = async () => {
   }
   savingPassword.value = true
   try {
-    await axios.put('http://localhost:8080/api/auth/change-password', {
+    await axios.put(`${BASE}/api/auth/change-password`, {
       currentPassword: passwordForm.value.currentPassword,
       newPassword:     passwordForm.value.newPassword,
     }, { headers: headers() })
@@ -294,7 +296,7 @@ const changePassword = async () => {
 const deleteAccount = async () => {
   deletingAccount.value = true
   try {
-    await axios.delete('http://localhost:8080/api/auth/account', { headers: headers() })
+    await axios.delete(`${BASE}/api/auth/account`, { headers: headers() })
     await authStore.logout()
     router.push('/')
   } catch (e) { showToast(e.response?.data?.message || 'Erreur lors de la suppression', 'error')

@@ -28,8 +28,13 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             Long freelancerId, ApplicationStatus status
     );
 
+    // candidatures pour plusieurs offres (utilisé pour le compteur messages non-lus côté CLIENT)
+    List<Application> findByOfferIdIn(List<Long> offerIds);
+
     // missions complétées entre un client et un freelancer donné
-    @Query("SELECT a FROM Application a WHERE a.freelancerId = :freelancerId AND a.status = 'COMPLETED' AND a.offerId IN (SELECT o.id FROM Offer o WHERE o.clientId = :clientId)")
+    @Query("SELECT a FROM Application a WHERE a.freelancerId = :freelancerId " +
+           "AND a.status = org.example.jobservice.enums.ApplicationStatus.COMPLETED " +
+           "AND a.offerId IN (SELECT o.id FROM Offer o WHERE o.clientId = :clientId)")
     List<Application> findCompletedByClientAndFreelancer(@Param("clientId") Long clientId, @Param("freelancerId") Long freelancerId);
 }
 

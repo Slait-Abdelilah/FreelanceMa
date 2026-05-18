@@ -264,7 +264,7 @@ const emptySubMessage = computed(() => {
   return 'Les missions validées apparaîtront ici'
 })
 
-const token   = () => localStorage.getItem('token')
+const token   = () => localStorage.getItem('token') || sessionStorage.getItem('token')
 const headers = () => ({ Authorization: `Bearer ${token()}` })
 
 const load = async () => {

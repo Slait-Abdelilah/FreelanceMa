@@ -261,7 +261,7 @@ const skillTags = computed(() => {
 
 // ===== Construire le header JWT pour axios =====
 const getHeaders = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` }
 })
 
 // ===== Envoyer le profil au backend → PUT /api/profile =====

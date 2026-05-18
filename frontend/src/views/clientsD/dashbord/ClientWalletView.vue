@@ -314,7 +314,7 @@ const transactions = ref([])
 const depositForm  = ref({ amount: null })
 const quickAmounts = [100, 200, 500, 1000]
 
-const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+const headers = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` } })
 
 // ── CHARGEMENT ──────────────────────────────────────────────────────────────
 

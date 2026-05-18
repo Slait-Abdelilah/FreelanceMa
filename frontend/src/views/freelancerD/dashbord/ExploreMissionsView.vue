@@ -555,7 +555,7 @@ const filteredOffers = computed(() => {
 
 // ===== AXIOS =====
 const authHeaders = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` }
 })
 
 // ===== CHARGER LES OFFRES → GET /api/offers =====

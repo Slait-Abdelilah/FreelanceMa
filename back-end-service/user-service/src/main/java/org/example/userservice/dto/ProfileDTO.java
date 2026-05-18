@@ -10,6 +10,11 @@ public class ProfileDTO {
     private String firstName;
     private String lastName;
     private String role;
+    // Client fields
+    private String companyName;
+    private String website;
+    private String sector;
+    // Freelancer fields
     private String title;
     private String bio;
     private String location;

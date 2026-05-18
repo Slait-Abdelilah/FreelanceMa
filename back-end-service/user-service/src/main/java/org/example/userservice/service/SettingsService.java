@@ -1,12 +1,14 @@
 package org.example.userservice.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.userservice.dto.*;
 import org.example.userservice.entity.UserProfile;
 import org.example.userservice.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SettingsService {
@@ -54,8 +56,11 @@ public class SettingsService {
 
     private UserProfile getOrCreate(String email, Long userId, String role) {
         return userProfileRepository.findByEmail(email)
-                .orElseGet(() -> userProfileRepository.save(
-                        UserProfile.builder().userId(userId).email(email).role(role).build()
-                ));
+                .orElseGet(() -> {
+                    log.warn("[SettingsService] Profil introuvable pour userId={} — création d'urgence (événement RabbitMQ manqué ?)", userId);
+                    return userProfileRepository.save(
+                            UserProfile.builder().userId(userId).email(email).role(role).build()
+                    );
+                });
     }
 }

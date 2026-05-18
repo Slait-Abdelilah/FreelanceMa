@@ -43,7 +43,8 @@ public class OfferService {
             OfferCategory cat = OfferCategory.valueOf(category.toUpperCase());
             return offerRepository.findByStatusAndCategoryOrderByCreatedAtDesc(OfferStatus.OPEN, cat, pageable).map(this::toDTO);
         } catch (IllegalArgumentException e) {
-            return offerRepository.findByStatusOrderByCreatedAtDesc(OfferStatus.OPEN, pageable).map(this::toDTO);
+            throw new IllegalArgumentException("Catégorie invalide : « " + category + " ». Valeurs acceptées : "
+                    + java.util.Arrays.toString(OfferCategory.values()));
         }
     }
 

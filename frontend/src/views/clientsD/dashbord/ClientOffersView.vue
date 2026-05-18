@@ -288,6 +288,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const route = useRoute()
 const offers      = ref([])
 const loading     = ref(true)
@@ -326,13 +328,13 @@ const categories = [
   { value: 'OTHER',              label: 'Autre' },
 ]
 
-const token   = () => localStorage.getItem('token')
+const token   = () => localStorage.getItem('token') || sessionStorage.getItem('token')
 const headers = () => ({ Authorization: `Bearer ${token()}` })
 
 const load = async () => {
   loading.value = true
   try {
-    const { data } = await axios.get('http://localhost:8080/api/offers/my', { headers: headers() })
+    const { data } = await axios.get(`${BASE}/api/offers/my`, { headers: headers() })
     offers.value = data
   } finally { loading.value = false }
 }
@@ -366,12 +368,12 @@ const submitForm = async () => {
     if (!payload.category)  delete payload.category
 
     if (editingOffer.value) {
-      const { data } = await axios.put(`http://localhost:8080/api/offers/${editingOffer.value.id}`, payload, { headers: headers() })
+      const { data } = await axios.put(`${BASE}/api/offers/${editingOffer.value.id}`, payload, { headers: headers() })
       const idx = offers.value.findIndex(o => o.id === data.id)
       if (idx !== -1) offers.value[idx] = data
       showToast('Offre mise à jour')
     } else {
-      const { data } = await axios.post('http://localhost:8080/api/offers', payload, { headers: headers() })
+      const { data } = await axios.post(`${BASE}/api/offers`, payload, { headers: headers() })
       offers.value.unshift(data)
       showToast('Offre publiée avec succès')
     }
@@ -387,7 +389,7 @@ const confirmDelete = (offer) => { deleteTarget.value = offer }
 const doClose = async () => {
   actionLoading.value = true
   try {
-    const { data } = await axios.patch(`http://localhost:8080/api/offers/${closeTarget.value.id}/close`, {}, { headers: headers() })
+    const { data } = await axios.patch(`${BASE}/api/offers/${closeTarget.value.id}/close`, {}, { headers: headers() })
     const idx = offers.value.findIndex(o => o.id === data.id)
     if (idx !== -1) offers.value[idx] = data
     showToast('Offre clôturée')
@@ -399,7 +401,7 @@ const doClose = async () => {
 const doDelete = async () => {
   actionLoading.value = true
   try {
-    await axios.delete(`http://localhost:8080/api/offers/${deleteTarget.value.id}`, { headers: headers() })
+    await axios.delete(`${BASE}/api/offers/${deleteTarget.value.id}`, { headers: headers() })
     offers.value = offers.value.filter(o => o.id !== deleteTarget.value.id)
     showToast('Offre supprimée')
     deleteTarget.value = null

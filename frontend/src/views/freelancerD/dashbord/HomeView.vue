@@ -284,7 +284,7 @@ import { RouterLink } from 'vue-router'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` } })
 
 // ── État ────────────────────────────────────
 const profile      = ref({})
@@ -318,7 +318,7 @@ const greeting = computed(() => {
 
 // ── Nom affiché ─────────────────────────────
 const displayName = computed(() => {
-  const stored = JSON.parse(localStorage.getItem('user') || '{}')
+  const stored = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}')
   const email = stored.email || ''
   const name = email.split('@')[0].replace(/[._]/g, ' ')
   return name.charAt(0).toUpperCase() + name.slice(1)

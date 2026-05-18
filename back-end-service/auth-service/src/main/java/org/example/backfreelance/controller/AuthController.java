@@ -30,8 +30,8 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    @GetMapping("/verify")
-    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+    @GetMapping("/verify/{token}")
+    public ResponseEntity<String> verifyEmail(@PathVariable String token) {
         authService.verifyEmail(token);
         return ResponseEntity.ok("Compte activé avec succès !");
     }

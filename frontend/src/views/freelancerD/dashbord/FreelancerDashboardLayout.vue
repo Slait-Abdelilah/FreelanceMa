@@ -248,7 +248,7 @@
         <div class="flex items-center gap-1">
 
           <!-- disponibilité -->
-          <button @click="available = !available"
+          <button @click="toggleAvailable"
                   class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md border transition text-[12px] font-medium"
                   :class="available
                     ? 'border-[#EBEBE5] text-[#5F5E5A] hover:border-[#D3D1C7]'
@@ -277,6 +277,10 @@
             <svg class="w-4 h-4 text-[#73726C] group-hover:text-ink transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
             </svg>
+            <span v-if="unreadMessagesCount > 0"
+                  class="absolute top-0.5 right-0.5 w-[14px] h-[14px] bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+              {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
+            </span>
           </RouterLink>
 
           <!-- notifications -->
@@ -374,7 +378,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { getProfile, updateProfile } from '@/api/users'
 import axios from 'axios'
+
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const route = useRoute()
 const router = useRouter()
@@ -383,6 +390,16 @@ const mobileMenuOpen = ref(false)
 const profileOpen = ref(false)
 const profileContainer = ref(null)
 const available = ref(true)
+
+const toggleAvailable = async () => {
+  try {
+    const next = !available.value
+    await updateProfile({ available: next })
+    available.value = next
+  } catch {
+    // silencieux — toggle revient à l'état précédent
+  }
+}
 
 // infos utilisateur
 const authStore = useAuthStore()
@@ -438,12 +455,12 @@ const applicationsCount  = ref(null)
 const activeMissionsCount = ref(null)
 
 const loadSidebarCounts = async () => {
-  const token = localStorage.getItem('token')
+  const token = authStore.token || localStorage.getItem('token') || sessionStorage.getItem('token')
   const headers = { Authorization: `Bearer ${token}` }
 
   const [offersRes, appsRes] = await Promise.allSettled([
-    axios.get('http://localhost:8080/api/offers', { headers }),
-    axios.get('http://localhost:8080/api/applications/my', { headers }),
+    axios.get(`${BASE}/api/offers`, { headers, _noRedirectOn403: true }),
+    axios.get(`${BASE}/api/applications/my`, { headers, _noRedirectOn403: true }),
   ])
 
   if (offersRes.status === 'fulfilled') {
@@ -493,6 +510,8 @@ const communicationItems = computed(() => [
     path: '/freelancer/messages',
     label: 'Messages',
     icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>',
+    badge: fmt(unreadMessagesCount.value),
+    urgent: unreadMessagesCount.value > 0,
   },
   {
     path: '/freelancer/notifications',
@@ -553,18 +572,20 @@ const profileMenu = [
   },
 ]
 
-const unreadCount = ref(0)
+const unreadCount         = ref(0)
+const unreadMessagesCount = ref(0)
 
 const loadUnreadCount = async () => {
+  const token = authStore.token || localStorage.getItem('token') || sessionStorage.getItem('token')
+  const h = { Authorization: `Bearer ${token}` }
   try {
-    const token = localStorage.getItem('token')
-    const { data } = await axios.get('http://localhost:8080/api/notifications/unread-count', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const { data } = await axios.get(`${BASE}/api/notifications/unread-count`, { headers: h, _noRedirectOn403: true })
     unreadCount.value = data.count || 0
-  } catch {
-    // silencieux — badge non critique
-  }
+  } catch { /* silencieux */ }
+  try {
+    const { data } = await axios.get(`${BASE}/api/messages/unread-count`, { headers: h, _noRedirectOn403: true })
+    unreadMessagesCount.value = data.count || 0
+  } catch { /* silencieux */ }
 }
 
 let pollInterval = null
@@ -588,25 +609,43 @@ const handleClickOutside = (e) => {
   }
 }
 
-// reset badge when navigating to notifications page
 watch(() => route.path, (path) => {
   if (path === '/freelancer/notifications') {
     setTimeout(() => { unreadCount.value = 0 }, 800)
   }
+  if (path === '/freelancer/messages') {
+    setTimeout(() => { unreadMessagesCount.value = 0 }, 800)
+  }
 })
 
-onMounted(() => {
+const handleKeydown = (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.metaKey || e.ctrlKey) return
+  if (e.key === 'p' || e.key === 'P') router.push('/freelancer/profile')
+  if (e.key === 'w' || e.key === 'W') router.push('/freelancer/wallet')
+  if (e.key === ',') router.push('/freelancer/settings')
+}
+
+onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleKeydown)
   loadUnreadCount()
   loadSidebarCounts()
   pollInterval = setInterval(() => {
     loadUnreadCount()
     loadSidebarCounts()
   }, 30000)
+
+  try {
+    const { data } = await getProfile()
+    if (typeof data.available === 'boolean') available.value = data.available
+  } catch {
+    // silencieux — valeur par défaut conservée
+  }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleKeydown)
   clearInterval(pollInterval)
 })
 

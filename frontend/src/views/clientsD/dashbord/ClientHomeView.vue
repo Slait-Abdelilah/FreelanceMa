@@ -136,6 +136,8 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const loading = ref(true)
 const offers  = ref([])
 const allApplications = ref([])
@@ -163,17 +165,17 @@ const stats = computed(() => {
   ]
 })
 
-const token  = () => localStorage.getItem('token')
+const token  = () => localStorage.getItem('token') || sessionStorage.getItem('token')
 const headers = () => ({ Authorization: `Bearer ${token()}` })
 
 const load = async () => {
   loading.value = true
   try {
-    const { data: myOffers } = await axios.get('http://localhost:8080/api/offers/my', { headers: headers() })
+    const { data: myOffers } = await axios.get(`${BASE}/api/offers/my`, { headers: headers() })
     offers.value = myOffers
 
     const appsResults = await Promise.allSettled(
-      myOffers.map(o => axios.get(`http://localhost:8080/api/offers/${o.id}/applications`, { headers: headers() }))
+      myOffers.map(o => axios.get(`${BASE}/api/offers/${o.id}/applications`, { headers: headers() }))
     )
     const apps = []
     appsResults.forEach(r => { if (r.status === 'fulfilled') apps.push(...r.value.data) })

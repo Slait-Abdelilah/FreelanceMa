@@ -73,6 +73,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/reviews/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
+                        // WebSocket STOMP (auth gérée par WebSocketAuthInterceptor)
+                        .requestMatchers("/ws/**").permitAll()
                         // messagerie : tout utilisateur connecté
                         .requestMatchers("/api/messages/**").authenticated()
                         // favoris : FREELANCER uniquement

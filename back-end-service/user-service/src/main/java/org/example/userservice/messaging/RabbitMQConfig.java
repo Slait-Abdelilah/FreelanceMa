@@ -1,6 +1,6 @@
 package org.example.userservice.messaging;
 
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -11,10 +11,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String QUEUE_REGISTERED = "user.registered.queue";
-    public static final String QUEUE_DELETED    = "user.deleted.queue";
+    public static final String USER_EXCHANGE      = "user.exchange";
+    public static final String ROUTING_REGISTERED = "user.registered";
+    public static final String ROUTING_DELETED    = "user.deleted";
+    public static final String QUEUE_REGISTERED   = "user.registered.queue";
+    public static final String QUEUE_DELETED      = "user.deleted.queue";
 
-    // Déclaration explicite des queues : Spring AMQP les crée dans RabbitMQ si elles n'existent pas
+    // Le consumer doit déclarer exchange + bindings au même titre que le publisher,
+    // pour que les queues soient routées même si user-service démarre avant auth-service.
+    @Bean
+    public DirectExchange userExchange() {
+        return new DirectExchange(USER_EXCHANGE);
+    }
+
     @Bean
     public Queue userRegisteredQueue() {
         return new Queue(QUEUE_REGISTERED, true);
@@ -23,6 +32,16 @@ public class RabbitMQConfig {
     @Bean
     public Queue userDeletedQueue() {
         return new Queue(QUEUE_DELETED, true);
+    }
+
+    @Bean
+    public Binding bindRegistered(Queue userRegisteredQueue, DirectExchange userExchange) {
+        return BindingBuilder.bind(userRegisteredQueue).to(userExchange).with(ROUTING_REGISTERED);
+    }
+
+    @Bean
+    public Binding bindDeleted(Queue userDeletedQueue, DirectExchange userExchange) {
+        return BindingBuilder.bind(userDeletedQueue).to(userExchange).with(ROUTING_DELETED);
     }
 
     @Bean
