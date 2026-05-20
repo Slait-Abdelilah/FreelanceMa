@@ -180,6 +180,7 @@
     </Transition>
 
     <!-- ═══ MODAL RECHARGE ═══ -->
+    <Teleport to="body">
     <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0"
                 leave-active-class="transition duration-150" leave-to-class="opacity-0">
       <div v-if="showDepositModal"
@@ -290,6 +291,7 @@
         </div>
       </div>
     </Transition>
+    </Teleport>
 
   </div>
 </template>

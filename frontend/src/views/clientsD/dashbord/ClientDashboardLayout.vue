@@ -1,4 +1,3 @@
-
 <template>
   <div class="min-h-screen bg-[#FAFAF7] flex">
 
@@ -287,7 +286,6 @@ const pageTitle = computed(() => ({
   '/client/settings':     'Paramètres',
 }[route.path] || 'Dashboard'))
 
-// ── Badges réels ────────────────────────────────────────────────────────
 const openOffersCount     = ref(null)
 const pendingAppsCount    = ref(null)
 const unreadMessagesCount = ref(0)
@@ -296,12 +294,11 @@ const loadCounts = async () => {
   const token = authStore.token || localStorage.getItem('token') || sessionStorage.getItem('token')
   const h = { Authorization: `Bearer ${token}` }
   try {
-    const { data: offers } = await axios.get(`${BASE}/api/offers/my`, { headers: h, _noRedirectOn403: true })
+    const { data: offers } = await axios.get(`${BASE}/api/offers/my`, { headers: h })
     const open = offers.filter(o => o.status === 'OPEN')
     openOffersCount.value = open.length
-
     const appsResults = await Promise.allSettled(
-      open.map(o => axios.get(`${BASE}/api/offers/${o.id}/applications`, { headers: h, _noRedirectOn403: true }))
+      open.map(o => axios.get(`${BASE}/api/offers/${o.id}/applications`, { headers: h }))
     )
     let pending = 0
     appsResults.forEach(r => {
@@ -311,14 +308,13 @@ const loadCounts = async () => {
     pendingAppsCount.value = pending
   } catch { /* silencieux */ }
   try {
-    const { data } = await axios.get(`${BASE}/api/messages/unread-count`, { headers: h, _noRedirectOn403: true })
+    const { data } = await axios.get(`${BASE}/api/messages/unread-count`, { headers: h })
     unreadMessagesCount.value = data.count || 0
   } catch { /* silencieux */ }
 }
 
 const fmt = (n) => n === null ? null : n > 99 ? '99+' : n > 0 ? String(n) : null
 
-// ── Nav items ────────────────────────────────────────────────────────────
 const mainItems = [
   { path: '/client/dashboard', label: "Vue d'ensemble",
     icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>' },

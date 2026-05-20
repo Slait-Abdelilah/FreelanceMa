@@ -132,6 +132,7 @@
     </div>
 
     <!-- ============ PANEL FORM ============ -->
+    <Teleport to="body">
     <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0"
                 leave-active-class="transition duration-150" leave-to-class="opacity-0">
       <div v-if="formOpen" class="fixed inset-0 bg-ink/30 z-40 flex items-start justify-end" @click.self="formOpen = false">
@@ -224,8 +225,10 @@
         </div>
       </div>
     </Transition>
+    </Teleport>
 
     <!-- MODAL CLÔTURER -->
+    <Teleport to="body">
     <Transition enter-active-class="transition duration-150" enter-from-class="opacity-0"
                 leave-active-class="transition duration-100" leave-to-class="opacity-0">
       <div v-if="closeTarget" class="fixed inset-0 bg-ink/30 z-50 flex items-center justify-center p-4" @click.self="closeTarget = null">
@@ -247,8 +250,10 @@
         </div>
       </div>
     </Transition>
+    </Teleport>
 
     <!-- MODAL SUPPRIMER -->
+    <Teleport to="body">
     <Transition enter-active-class="transition duration-150" enter-from-class="opacity-0"
                 leave-active-class="transition duration-100" leave-to-class="opacity-0">
       <div v-if="deleteTarget" class="fixed inset-0 bg-ink/30 z-50 flex items-center justify-center p-4" @click.self="deleteTarget = null">
@@ -270,8 +275,10 @@
         </div>
       </div>
     </Transition>
+    </Teleport>
 
     <!-- TOAST -->
+    <Teleport to="body">
     <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 translate-y-2"
                 leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-2">
       <div v-if="toast"
@@ -279,6 +286,7 @@
         {{ toast }}
       </div>
     </Transition>
+    </Teleport>
 
   </div>
 </template>

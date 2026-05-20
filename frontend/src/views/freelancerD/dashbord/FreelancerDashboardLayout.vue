@@ -18,7 +18,7 @@
 
       <!-- BARRE DE RECHERCHE -->
       <div class="px-3 pb-3">
-        <button class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#F4F4ED] hover:bg-[#EBEBE5] transition text-left">
+        <button @click="openSearch" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#F4F4ED] hover:bg-[#EBEBE5] transition text-left">
           <svg class="w-3.5 h-3.5 text-[#9C9A92]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
@@ -132,14 +132,6 @@
       <!-- FOOTER : AIDE + DÉCONNEXION -->
       <div class="px-3 py-3 border-t border-[#EBEBE5] space-y-0.5">
 
-        <RouterLink to="/freelancer/help"
-                    class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium text-[#5F5E5A] hover:bg-[#F4F4ED] hover:text-ink transition group">
-          <svg class="w-[15px] h-[15px] text-[#73726C] group-hover:text-ink transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>
-          </svg>
-          <span>Centre d'aide</span>
-        </RouterLink>
-
         <button @click="logout"
                 class="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium text-[#5F5E5A] hover:bg-red-50 hover:text-red-600 transition group">
           <svg class="w-[15px] h-[15px] text-[#73726C] group-hover:text-red-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
@@ -198,14 +190,6 @@
 
       <!-- footer mobile -->
       <div class="px-3 py-3 border-t border-[#EBEBE5] space-y-0.5">
-        <RouterLink to="/freelancer/help"
-                    @click="mobileMenuOpen = false"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium text-[#5F5E5A] hover:bg-[#F4F4ED] transition">
-          <svg class="w-[15px] h-[15px] text-[#73726C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>
-          </svg>
-          <span>Centre d'aide</span>
-        </RouterLink>
         <button @click="logout"
                 class="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium text-[#5F5E5A] hover:bg-red-50 hover:text-red-600 transition">
           <svg class="w-[15px] h-[15px] text-[#73726C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
@@ -372,10 +356,69 @@
     </main>
 
   </div>
+
+  <!-- ============ SEARCH MODAL ============ -->
+  <Teleport to="body">
+    <Transition enter-active-class="transition duration-150" enter-from-class="opacity-0"
+                leave-active-class="transition duration-100" leave-to-class="opacity-0">
+      <div v-if="searchOpen" class="fixed inset-0 bg-ink/30 z-50 flex items-start justify-center pt-[12vh] px-4"
+           @click.self="searchOpen = false">
+        <div class="bg-white rounded-2xl border border-[#EBEBE5] shadow-xl w-full max-w-lg overflow-hidden" @click.stop>
+
+          <!-- Input -->
+          <div class="flex items-center gap-3 px-4 py-3.5 border-b border-[#EBEBE5]">
+            <svg class="w-4 h-4 text-[#9C9A92] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input ref="searchInputRef" v-model="searchQuery" type="text" placeholder="Rechercher une page..."
+                   class="flex-1 text-[14px] text-ink outline-none placeholder:text-[#C4C3BC]"
+                   @keydown.escape="searchOpen = false"
+                   @keydown.enter="navigateToSelected"
+                   @keydown.up.prevent="selectedIndex = Math.max(0, selectedIndex - 1)"
+                   @keydown.down.prevent="selectedIndex = Math.min(filteredSearchItems.length - 1, selectedIndex + 1)"/>
+            <kbd class="text-[11px] text-[#9C9A92] bg-[#F4F4ED] border border-[#EBEBE5] rounded px-1.5 py-0.5 flex-shrink-0">Esc</kbd>
+          </div>
+
+          <!-- Résultats -->
+          <div class="max-h-[380px] overflow-y-auto py-1.5">
+            <div v-if="filteredSearchItems.length === 0" class="px-4 py-10 text-center text-[13px] text-[#9C9A92]">
+              Aucun résultat pour "{{ searchQuery }}"
+            </div>
+            <template v-else>
+              <template v-for="(group, gi) in groupedSearchItems" :key="gi">
+                <div class="px-4 pt-3 pb-1">
+                  <span class="text-[10px] font-semibold text-[#9C9A92] uppercase tracking-widest">{{ group.title }}</span>
+                </div>
+                <button v-for="(item, i) in group.items" :key="item.path"
+                        @click="goToSearch(item.path)"
+                        @mouseenter="selectedIndex = item._idx"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 text-left transition"
+                        :class="item._idx === selectedIndex ? 'bg-[#F4F4ED]' : 'hover:bg-[#FAFAF7]'">
+                  <span v-html="item.icon" class="w-[15px] h-[15px] text-[#9C9A92] flex-shrink-0"></span>
+                  <span class="text-[13px] font-medium text-ink">{{ item.label }}</span>
+                  <svg class="w-3 h-3 text-[#C4C3BC] ml-auto flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              </template>
+            </template>
+          </div>
+
+          <!-- Footer -->
+          <div class="border-t border-[#EBEBE5] px-4 py-2 flex items-center gap-4 text-[11px] text-[#9C9A92]">
+            <span class="flex items-center gap-1"><kbd class="bg-[#F4F4ED] border border-[#EBEBE5] rounded px-1 py-0.5">↑↓</kbd> naviguer</span>
+            <span class="flex items-center gap-1"><kbd class="bg-[#F4F4ED] border border-[#EBEBE5] rounded px-1 py-0.5">↵</kbd> ouvrir</span>
+            <span class="flex items-center gap-1"><kbd class="bg-[#F4F4ED] border border-[#EBEBE5] rounded px-1 py-0.5">Esc</kbd> fermer</span>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { getProfile, updateProfile } from '@/api/users'
@@ -390,6 +433,31 @@ const mobileMenuOpen = ref(false)
 const profileOpen = ref(false)
 const profileContainer = ref(null)
 const available = ref(true)
+
+// ── Recherche ────────────────────────────────────────────────────────────────
+const searchOpen    = ref(false)
+const searchQuery   = ref('')
+const searchInputRef = ref(null)
+const selectedIndex = ref(0)
+
+const openSearch = async () => {
+  searchOpen.value  = true
+  searchQuery.value = ''
+  selectedIndex.value = 0
+  await nextTick()
+  searchInputRef.value?.focus()
+}
+
+const goToSearch = (path) => {
+  searchOpen.value = false
+  router.push(path)
+}
+
+const navigateToSelected = () => {
+  if (filteredSearchItems.value[selectedIndex.value]) {
+    goToSearch(filteredSearchItems.value[selectedIndex.value].path)
+  }
+}
 
 const toggleAvailable = async () => {
   try {
@@ -598,6 +666,43 @@ const allSections = computed(() => [
   { title: 'Compte', items: accountItems },
 ])
 
+// Tous les items de navigation avec leur section
+const allNavSections = computed(() => [
+  { title: 'Vue d\'ensemble', items: mainItems },
+  { title: 'Workspace',       items: workspaceItems.value },
+  { title: 'Communication',   items: communicationItems.value },
+  { title: 'Compte',          items: accountItems },
+])
+
+const filteredSearchItems = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  let idx = 0
+  const result = []
+  for (const section of allNavSections.value) {
+    for (const item of section.items) {
+      if (!q || item.label.toLowerCase().includes(q)) {
+        result.push({ ...item, _idx: idx++ })
+      }
+    }
+  }
+  return result
+})
+
+const groupedSearchItems = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  let idx = 0
+  return allNavSections.value
+    .map(section => ({
+      title: section.title,
+      items: section.items
+        .filter(item => !q || item.label.toLowerCase().includes(q))
+        .map(item => ({ ...item, _idx: idx++ })),
+    }))
+    .filter(s => s.items.length > 0)
+})
+
+watch(searchQuery, () => { selectedIndex.value = 0 })
+
 const logout = async () => {
   await authStore.logout()
   router.push('/login/freelancer')
@@ -619,6 +724,12 @@ watch(() => route.path, (path) => {
 })
 
 const handleKeydown = (e) => {
+  // ⌘K / Ctrl+K — ouvrir la recherche
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    openSearch()
+    return
+  }
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.metaKey || e.ctrlKey) return
   if (e.key === 'p' || e.key === 'P') router.push('/freelancer/profile')
   if (e.key === 'w' || e.key === 'W') router.push('/freelancer/wallet')

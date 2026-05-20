@@ -448,10 +448,12 @@
 
 <script setup>
 import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 
+const route    = useRoute()
 const API_URL  = import.meta.env.VITE_API_URL         || 'http://localhost:8080'
 const WS_BASE  = import.meta.env.VITE_JOB_SERVICE_URL || 'http://localhost:8083'
 const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token')
@@ -719,6 +721,7 @@ const loadConversations = async () => {
               .filter(a => ACTIVE.includes(a.status))
               .map(a => ({
                 id: a.id, offerTitle: o.title, status: a.status,
+                freelancerId: a.freelancerId,
                 otherLabel: `Freelancer #${String(a.freelancerId).slice(-3)}`,
                 initials:   `F${String(a.freelancerId).slice(-2)}`,
               }))
@@ -730,6 +733,12 @@ const loadConversations = async () => {
       conversations.value = all
     }
     if (conversations.value.length > 0) connectAll()
+    // auto-select if navigated from freelancer profile
+    const targetFreelancer = route.query.freelancer ? Number(route.query.freelancer) : null
+    if (targetFreelancer) {
+      const conv = conversations.value.find(c => c.freelancerId === targetFreelancer)
+      if (conv) selectConversation(conv)
+    }
   } catch (e) {
     conversationError.value = e?.response?.data?.message || 'Impossible de charger vos conversations.'
   } finally {
